@@ -20,7 +20,7 @@ gchar fl[160];
 gchar wtitle[256];
 GList *rdata = NULL;
 GList *rindx = NULL;
-guchar *ptr;
+gchar *ptr;
 // GString *gstr;
 GtkWidget *ndex, *window, *f_sel;
 GtkWidget *cardata, *statdata, *htext;	 // htext header added 28/04/2001
@@ -200,7 +200,7 @@ void CloseandAdd (GtkWidget *widget, gpointer *data)
   gchar *entry = gtk_editable_get_chars((GtkEditable *) ndex, 0, 40);
   gtk_widget_destroy (dialog_widget);
   first = TRUE;
-  printf ("%d: %s\n\n", strlen(entry), entry);
+  printf ("%ld: %s\n\n", strlen(entry), entry);
   buffnew = g_strdup_printf("%s", g_strstrip(entry));
   if(strlen(entry) != 0) {
 	 rindx = g_list_insert_sorted (rindx, (gchar *)buffnew, (GCompareFunc) eval_items);
@@ -226,8 +226,9 @@ void callback ( GtkWidget *widget, gpointer data )
 void callnext( GtkWidget *widget, gpointer data )
 {
   guint c1 = count + 1;
-  if (c1 == ccnt)
+  if (c1 == ccnt) {
 	 c1 = 0;		// circle to first item
+  }
   gtk_list_select_item (GTK_LIST(data), c1);
 }
 
@@ -259,8 +260,8 @@ void CardOut ( GtkWidget *widget, gpointer data )
   ccnt --;
   g_list_free (rindx);
   g_list_free (rdata);
-  (GList *) rindx = g_list_copy (newndx);
-  (GList *) rdata = g_list_copy (newdat);
+  rindx = g_list_copy (newndx);
+  rdata = g_list_copy (newdat);
   g_list_free (newndx);
   g_list_free (newdat);
   altered = TRUE;
@@ -354,8 +355,9 @@ void file_back (GtkWidget *widget)
 {
   gtk_widget_hide(f_sel);
   fname=gtk_file_selection_get_filename(GTK_FILE_SELECTION(f_sel));
-  if (eval_items(fl, fname))
+  if (eval_items(fl, fname)) {
 	 g_snprintf (fl, 160, "%s", (gchar *)fname);
+  }
   switch (f_op) {
   case 0:    // File Open
 	 get_card_data (listbox, fl);
@@ -468,13 +470,13 @@ int main (int argc, char *argv[])
 		strcpy (fl, "default.crd");
 // create and initialize items as needed:
 	listbox = gtk_list_new ();
-	statdata = gtk_text_new (FALSE, 0);
-	gtk_text_set_editable (GTK_TEXT (statdata), FALSE);
-	htext = gtk_text_new (NULL, NULL); // 28/04/2001
-	gtk_text_set_editable (GTK_TEXT (htext), FALSE);
-	cardata = gtk_text_new (NULL, NULL);
-	gtk_text_set_word_wrap (GTK_TEXT (cardata), TRUE);
-	gtk_text_set_editable (GTK_TEXT (cardata), TRUE);
+	statdata = gtk_entry_new();
+	gtk_entry_set_editable(GTK_ENTRY(statdata), FALSE);
+	htext = gtk_entry_new();
+	gtk_entry_set_editable(GTK_ENTRY(htext), FALSE);
+	cardata = gtk_entry_new();
+	gtk_entry_set_editable(GTK_ENTRY(cardata), TRUE);
+	// gtk_text_set_word_wrap (GTK_TEXT (cardata), TRUE);
 	gtk_list_set_selection_mode (GTK_LIST (listbox), GTK_SELECTION_SINGLE);
 // note: all listbox parameters had to be set before menu factory - core dump otherwise
 // menu factory:
@@ -530,7 +532,7 @@ int main (int argc, char *argv[])
 	gtk_box_pack_start (GTK_BOX(box2), div1, FALSE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX(box2), hbox, FALSE, FALSE, 0);
 	gtk_box_pack_start (GTK_BOX(box2), div2, FALSE, TRUE, 0);
-	gtk_accel_group_attach (accel, GTK_OBJECT(window));
+	gtk_window_add_accel_group(GTK_WINDOW(window), accel);
 	gtk_container_add (GTK_CONTAINER(window), box2);
 	gtk_widget_show_all (window);
 // listbox, cardata, statdata, scrwin, box1, box2, hbox, vbox, div1, div2, div3
@@ -597,6 +599,7 @@ void parsebuf ()
 
 void l_select (GtkWidget *widget, guint ndata)	// widget is callback's listbox
 {
+	gint position;
 	gchar *ptr1;
 	GList *node;
 	GtkWidget *ditem;
@@ -617,37 +620,41 @@ void l_select (GtkWidget *widget, guint ndata)	// widget is callback's listbox
 	ditem = GTK_WIDGET(node->data);		// list item data
 	count = gtk_list_child_position (GTK_LIST(widget), ditem);
 	ptr1 = g_list_nth_data (rindx, count);
-	gtk_text_freeze (GTK_TEXT(cardata));
+	//gtk_text_freeze (GTK_TEXT(cardata));
 	gtk_editable_delete_text (GTK_EDITABLE(cardata), 0, -1);
 // not editable, but works.
 	gtk_editable_delete_text (GTK_EDITABLE(htext), 0, -1);
-	gtk_text_insert (GTK_TEXT(htext), NULL, NULL, NULL, ptr1, strlen(ptr1));
+	position = gtk_editable_get_position(GTK_EDITABLE(htext));
+	gtk_editable_insert_text(GTK_EDITABLE(htext), ptr1, strlen(ptr1), &position);
 	ptr1 = g_list_nth_data (rdata, count);  // record data
-	gtk_text_insert (GTK_TEXT(cardata), NULL, NULL, NULL, ptr1, strlen(ptr1));
-	gtk_text_thaw (GTK_TEXT(cardata));
+	position = gtk_editable_get_position(GTK_EDITABLE(cardata));
+	gtk_editable_insert_text(GTK_EDITABLE(cardata), ptr1, strlen(ptr1), &position);
+	//gtk_text_thaw (GTK_TEXT(cardata));
 	first = FALSE;
 	currstat ();
 }
 
 void currstat ()
 {
+	gint position;
 	gchar *ptr1, *ptr2;
 	gchar *head;
 	ptr1 = g_list_nth_data (rindx, count);
 	ptr2 = g_list_nth_data (rdata, count);
-	gtk_text_freeze (GTK_TEXT(statdata));
+	//gtk_text_freeze (GTK_TEXT(statdata));
 	gtk_editable_delete_text (GTK_EDITABLE(statdata), 0, -1);
 	head = g_strdup_printf ("Entries: %d   Count: %d\nIndex: %d (data length: %d)\n%s", ccnt, count, strlen(ptr1), strlen(ptr2), ptr1);
-	gtk_text_insert (GTK_TEXT(statdata), NULL, NULL, NULL, head, strlen(head));
+	position = gtk_editable_get_position(GTK_EDITABLE(statdata));
+	gtk_editable_insert_text(GTK_EDITABLE(statdata), head, strlen(head), &position);
 	ptr1 = g_list_nth_data (rindx, 0);
 	ptr2 = g_list_nth_data (rdata, 0);
 	head = g_strdup_printf ("\n\nMGC length: %d   End:  %d (cards): %d", indpos, datpos, (guint16) ptr[3]);
-	gtk_text_insert (GTK_TEXT(statdata), NULL, NULL, NULL, head, strlen(head));
+	gtk_editable_insert_text(GTK_EDITABLE(statdata), head, strlen(head), &position);
 	head = g_strdup_printf ("\n\nData start %d  length: %d\nFile: %s  [%d]\n", indpos + 1, datpos + 1, fl, flen);
-	gtk_text_insert (GTK_TEXT(statdata), NULL, NULL, NULL, head, strlen(head));
+	gtk_editable_insert_text(GTK_EDITABLE(statdata), head, strlen(head), &position);
         head = g_strdup_printf ("\nFile Status: %s", (altered ? "** Altered **":"** Unchanged **"));
-	gtk_text_insert (GTK_TEXT(statdata), NULL, NULL, NULL, head, strlen(head));
-	gtk_text_thaw (GTK_TEXT(statdata));
+	gtk_editable_insert_text(GTK_EDITABLE(statdata), head, strlen(head), &position);
+	//gtk_text_thaw (GTK_TEXT(statdata));
 	g_free(head);
 }
 // re_sort: called from CloseandAdd, men_move->save, CardOut and parsebuf
@@ -696,11 +703,14 @@ gchar *addcr (gchar *str) // called from re_sort, savbuff
 {
   gint x;
   GString *gstr = g_string_new(str);
-  if (gstr->str[0] == '\n')
+  if (gstr->str[0] == '\n') {
 	 g_string_insert_c(gstr, 0, '\r');
-  for (x = 1 ; x < gstr->len ; x ++)
-	 if (gstr->str[x - 1] != '\r' && gstr->str[x] == '\n')
+  }
+  for (x = 1 ; x < gstr->len ; x ++) {
+	  if (gstr->str[x - 1] != '\r' && gstr->str[x] == '\n') {
 		g_string_insert_c(gstr, x, '\r');
+	  }
+  }
   return gstr->str;
 }
 
@@ -708,7 +718,7 @@ gchar *savbuff ()
 {
   guint x, ofs, dat, slen;
   gchar *txt;
-  guchar *bufn = g_strnfill (datpos + 1, 0);
+  gchar *bufn = g_strnfill (datpos + 1, 0);
   GList *node, *node1;
   bufn[0]='M';
   bufn[1]='G';
