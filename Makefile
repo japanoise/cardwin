@@ -1,3 +1,17 @@
-all:
-	$(CC) -g cardwin.c -o cardwin `pkg-config --cflags gtk+-2.0` `pkg-config --libs gtk+-2.0`
+CFLAGS=$(shell pkg-config --cflags gtk+-2.0)
+LDFLAGS=$(shell pkg-config --libs gtk+-2.0)
+PROGNAME=cardwin
+OBJECTS=cardwin.o
 
+all: $(PROGNAME)
+
+debug: CFLAGS+=-g -O0
+debug: $(PROGNAME)
+
+$(PROGNAME): $(OBJECTS)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm -rf *.o
+	rm -rf *.exe
+	rm -rf $(PROGNAME)
