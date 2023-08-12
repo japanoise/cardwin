@@ -1,0 +1,155 @@
+2001-06-28  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Add 'Altered' display to statdata window, multi-use statdata's head string
+
+2001-06-24  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	remove flen from get_card_data parameters - sub finds length
+
+2001-06-24  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	load & parse files properly
+
+2001-06-20  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	New File in menu set to create pointer to 5 bytes, clear entries
+
+2001-06-20  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	change: get_card_data sub returns instead of exits on bad file
+
+2001-06-20  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	new buffers using g_list_free to clear data in CardOut, parsebuff
+
+2001-06-20  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	DelCard calls CardOut for removal: removal problem caused by selected unit
+	fixed by setting first=TRUE to prevent reading in of current card.
+
+2001-06-17  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	savbuff works: parsebuf called at end, proper data adjustment
+
+2001-06-16  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	start on savbuff, sub creating and filling new buffer for file storage
+
+2001-06-16  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	addcr and killcr subs to convert between DOS and Linux format strings
+
+2001-06-15  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Identify AddCard as transient window for better placement.
+
+2001-06-10  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	separate parsebuf from get_card_data to allow parses from modification subs
+
+2001-06-03  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Transients allow better window control for YesNo, ShowMessage subs
+
+2001-06-03  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Card edit directed through l_select(). UpdateData sub unused
+
+2001-06-01  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Checking array manipulation for node->data edit
+
+2001-05-28  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	AddCard focus to ndex object: gtk_widget_grab_focus()
+
+2001-05-27  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	remove Edit button: not used
+
+2001-05-26  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	UpdateData sub for editing of rdata array
+
+2001-05-26  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	corrected - g_strdup_printf allocates memory for strings properly
+
+2001-05-24  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	entries not added properly?? re_sort gets garbage from new list entries
+
+2001-05-24  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	make listbox a global for easier population
+
+2001-05-24  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	ToggleButton sub to create Edit button
+
+2001-05-23  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	re_sort calculates index length, data start, end file (datpos+1)
+	Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	indpos+1: start of file data
+
+2001-05-23  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	re_sort sub to repopulate listbox with sized array items
+
+2001-05-23  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	eval_items sub for insertion of array elements
+
+2001-05-21  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	can't copy ptr list for appending lists. use address instead
+
+2001-05-21  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	currstat sub for statdata  info created
+
+2001-05-21  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	And to get ready for AddCard's CloseandAdd to alter cardlist
+
+2001-05-18  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Rewrite some code to use list pointers for index, data
+
+2001-05-10  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	CloseandAdd sub: set up dummy call from AddCard
+
+2001-05-09  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	AddCard sub to take index field. (req'd: chop length to 37 characters)
+
+2001-05-08  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	rewrite menubar entries to call single sub, calling same Fn's as buttons
+
+2001-04-30  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Record section of menu works properly (gpointer) is OK
+
+2001-04-28  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	Callbacks for menu segfaulting: parm error?
+
+2000-08-27  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	move stat to main from file_exists sub. flen var
+
+2000-08-26  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	sub for file stat (Sam's text)
+
+2000-06-30  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	int altered var to indicate if changes made
+
+2000-06-25  Cam Menard  <cmenard@keewatinbcc.mb.ca>
+
+	sub to calculate buffer length in Bytes
