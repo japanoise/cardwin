@@ -271,6 +271,26 @@ void CardOut ( GtkWidget *widget, gpointer data )
   gtk_widget_destroy (GTK_WIDGET(data));
 }
 
+void new_cards() {
+	g_free(ptr);
+
+	g_snprintf (fl, 160, "%s", "");
+	ptr = g_strnfill (5, 0);
+	ptr[0] = 'M';
+	ptr[1] = 'G';
+	ptr[2] = 'C';
+	ptr[3] = ptr[4] = 0;
+	parsebuf ();  // create listbox data from GList
+}
+
+void save_as() {
+	f_op = 2;
+	gtk_file_selection_set_filename(GTK_FILE_SELECTION(f_sel), "./*.crd");
+	f_openh(f_sel);
+	//	 ShowMessage ("WIP:", "-Save As- is currently Work In Progress.");
+	ptr = savbuff();
+}
+
 /* menu callbacks */
 void men_move ( gpointer data, guint action, GtkWidget *widget )
 {
@@ -282,19 +302,15 @@ void men_move ( gpointer data, guint action, GtkWidget *widget )
 	 f_openh(f_sel);
 	 break;
   case 1:  // new
-	 g_free(ptr);
-
-	 g_snprintf (fl, 160, "%s", "");
-	 ptr = g_strnfill (5, 0);
-	 ptr[0] = 'M';
-	 ptr[1] = 'G';
-	 ptr[2] = 'C';
-	 ptr[3] = ptr[4] = 0;
-	 parsebuf ();  // create listbox data from GList
+	 new_cards();
 	 gtk_editable_delete_text (GTK_EDITABLE(cardata), 0, -1);
 	 gtk_editable_delete_text (GTK_EDITABLE(htext), 0, -1);
 	 break;
   case 2:   // save
+	 if (fl[0] == 0) {
+	 	  save_as();
+	 	  break;
+	 }
 	 re_sort (listbox, rindx);  // just a test
 	 //	 ShowMessage ("WIP:", "- File will be saved -\nWork In Progress.");
 	 ptr = savbuff();
@@ -303,11 +319,7 @@ void men_move ( gpointer data, guint action, GtkWidget *widget )
 	 altered = FALSE;
 	 break;
   case 3:  // save as
-	 f_op = 2;
-	 gtk_file_selection_set_filename(GTK_FILE_SELECTION(f_sel), "./*.crd");
-	 f_openh(f_sel);
-	 //	 ShowMessage ("WIP:", "-Save As- is currently Work In Progress.");
-	 ptr = savbuff();
+	 save_as();
 	 break;
   case 4:  // exit
 	 // if (altered), ask about saving file
@@ -464,10 +476,6 @@ int main (int argc, char *argv[])
 	gtk_container_set_border_width (GTK_CONTAINER(window), 10);
 	gtk_widget_realize (window);
 
-	if (argc > 1)
-		strcpy (fl, argv[1]);
-	else
-		strcpy (fl, "default.crd");
 // create and initialize items as needed:
 	listbox = gtk_list_new ();
 	statdata = gtk_entry_new();
@@ -492,7 +500,16 @@ int main (int argc, char *argv[])
 	gtk_signal_connect (GTK_OBJECT(GTK_FILE_SELECTION(f_sel)->ok_button), "clicked", file_back, NULL);
 	gtk_signal_connect (GTK_OBJECT(GTK_FILE_SELECTION(f_sel)->cancel_button), "clicked", GTK_SIGNAL_FUNC(hide_win), NULL);
 
-	get_card_data (listbox, fl);
+	if (argc > 1) {
+		strcpy (fl, argv[1]);
+
+		get_card_data (listbox, fl);
+	}
+	else {
+		fl[0] = 0;
+		new_cards();
+	}
+
 	box1 = gtk_hbox_new (FALSE, 15);
 	butP = PackNewButton (box1, "Prev", TRUE);
 	butN = PackNewButton (box1, "Next", TRUE);
