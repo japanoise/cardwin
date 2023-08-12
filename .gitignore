@@ -1,1 +1,5 @@
 cardwin
+/.cache/
+*.crd
+*.o
+/compile_commands.json
