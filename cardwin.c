@@ -23,7 +23,9 @@ GList *rindx = NULL;
 gchar *ptr;
 // GString *gstr;
 GtkWidget *ndex, *window, *f_sel;
-GtkWidget *cardata, *statdata, *htext; // htext header added 28/04/2001
+GtkWidget *card_header;
+GtkWidget *card_data;
+GtkWidget *statdata;
 GtkWidget *listbox;
 gint count, altered, first;
 
@@ -160,7 +162,7 @@ void exitNo(GtkWidget *widget, gpointer *data)
 void AddCard(GtkWidget *widget, gpointer data) // data is *listbox
 {
 	// requires a textbox for 40-character input 'index' field.
-	// then call the edit card function to edit cardata blank text field.
+	// then call the edit card function to edit card_data blank text field.
 	GtkWidget *label;
 	GtkWidget *butOK, *butCancel;
 	GtkWidget *d_window;
@@ -231,7 +233,7 @@ void CloseandAdd(GtkWidget *widget, gpointer *data)
 		re_sort(listbox, rindx);
 		altered = TRUE;
 		gtk_list_select_item(GTK_LIST(listbox), count);
-		gtk_widget_grab_focus(GTK_WIDGET(cardata));
+		gtk_widget_grab_focus(GTK_WIDGET(card_data));
 	}
 	g_free(entry);
 }
@@ -327,8 +329,8 @@ void men_move(gpointer data, guint action, GtkWidget *widget)
 		break;
 	case 1: // new
 		new_cards();
-		gtk_editable_delete_text(GTK_EDITABLE(cardata), 0, -1);
-		gtk_editable_delete_text(GTK_EDITABLE(htext), 0, -1);
+		gtk_editable_delete_text(GTK_EDITABLE(card_data), 0, -1);
+		gtk_editable_delete_text(GTK_EDITABLE(card_header), 0, -1);
 		break;
 	case 2: // save
 		if (fl[0] == 0) {
@@ -508,11 +510,11 @@ int main(int argc, char *argv[])
 	listbox = gtk_list_new();
 	statdata = gtk_entry_new();
 	gtk_entry_set_editable(GTK_ENTRY(statdata), FALSE);
-	htext = gtk_entry_new();
-	gtk_entry_set_editable(GTK_ENTRY(htext), FALSE);
-	cardata = gtk_entry_new();
-	gtk_entry_set_editable(GTK_ENTRY(cardata), TRUE);
-	// gtk_text_set_word_wrap (GTK_TEXT (cardata), TRUE);
+	card_header = gtk_entry_new();
+	gtk_entry_set_editable(GTK_ENTRY(card_header), FALSE);
+	card_data = gtk_entry_new();
+	gtk_entry_set_editable(GTK_ENTRY(card_data), TRUE);
+	// gtk_text_set_word_wrap (GTK_TEXT (card_data), TRUE);
 	gtk_list_set_selection_mode(GTK_LIST(listbox), GTK_SELECTION_SINGLE);
 	// note: all listbox parameters had to be set before menu factory - core dump otherwise
 	// menu factory:
@@ -571,15 +573,15 @@ int main(int argc, char *argv[])
 	div3 = gtk_hseparator_new();
 	gtk_widget_set_usize(scrwin, 320, 400);
 	// usize: widget, width, height.
-	gtk_widget_set_usize(htext, 350, 25); // 28/04/2001
-	gtk_widget_set_usize(cardata, 350, 225);
+	gtk_widget_set_usize(card_header, 350, 25); // 28/04/2001
+	gtk_widget_set_usize(card_data, 350, 225);
 	gtk_widget_set_usize(statdata, 350, 150);
 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrwin),
 					      listbox);
 	gtk_box_pack_start(GTK_BOX(hbox), scrwin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), htext, FALSE, FALSE, 0); // 28/04/2001
-	gtk_box_pack_start(GTK_BOX(vbox), cardata, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), card_header, FALSE, FALSE, 0); // 28/04/2001
+	gtk_box_pack_start(GTK_BOX(vbox), card_data, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), div3, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), statdata, FALSE, FALSE, 0);
 	// from item factory
@@ -591,7 +593,7 @@ int main(int argc, char *argv[])
 	gtk_window_add_accel_group(GTK_WINDOW(window), accel);
 	gtk_container_add(GTK_CONTAINER(window), box2);
 	gtk_widget_show_all(window);
-	// listbox, cardata, statdata, scrwin, box1, box2, hbox, vbox, div1, div2, div3
+	// listbox, card_data, statdata, scrwin, box1, box2, hbox, vbox, div1, div2, div3
 	gtk_list_select_item(GTK_LIST(listbox), count);
 	gtk_main();
 	return 0;
@@ -661,7 +663,7 @@ void l_select(GtkWidget *widget, guint ndata) // widget is callback's listbox
 	GtkWidget *ditem;
 	if (!first) {
 		gchar *entry =
-			gtk_editable_get_chars(GTK_EDITABLE(cardata), 0, -1);
+			gtk_editable_get_chars(GTK_EDITABLE(card_data), 0, -1);
 		node = g_list_nth(rdata, count);
 		if (g_strcasecmp((gchar *)entry, (gchar *)node->data) != 0) {
 			node->data = (gpointer)
@@ -677,18 +679,18 @@ void l_select(GtkWidget *widget, guint ndata) // widget is callback's listbox
 	ditem = GTK_WIDGET(node->data); // list item data
 	count = gtk_list_child_position(GTK_LIST(widget), ditem);
 	ptr1 = g_list_nth_data(rindx, count);
-	//gtk_text_freeze (GTK_TEXT(cardata));
-	gtk_editable_delete_text(GTK_EDITABLE(cardata), 0, -1);
+	//gtk_text_freeze (GTK_TEXT(card_data));
+	gtk_editable_delete_text(GTK_EDITABLE(card_data), 0, -1);
 	// not editable, but works.
-	gtk_editable_delete_text(GTK_EDITABLE(htext), 0, -1);
-	position = gtk_editable_get_position(GTK_EDITABLE(htext));
-	gtk_editable_insert_text(GTK_EDITABLE(htext), ptr1, strlen(ptr1),
+	gtk_editable_delete_text(GTK_EDITABLE(card_header), 0, -1);
+	position = gtk_editable_get_position(GTK_EDITABLE(card_header));
+	gtk_editable_insert_text(GTK_EDITABLE(card_header), ptr1, strlen(ptr1),
 				 &position);
 	ptr1 = g_list_nth_data(rdata, count); // record data
-	position = gtk_editable_get_position(GTK_EDITABLE(cardata));
-	gtk_editable_insert_text(GTK_EDITABLE(cardata), ptr1, strlen(ptr1),
+	position = gtk_editable_get_position(GTK_EDITABLE(card_data));
+	gtk_editable_insert_text(GTK_EDITABLE(card_data), ptr1, strlen(ptr1),
 				 &position);
-	//gtk_text_thaw (GTK_TEXT(cardata));
+	//gtk_text_thaw (GTK_TEXT(card_data));
 	first = FALSE;
 	currstat();
 }
