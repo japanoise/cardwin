@@ -134,6 +134,203 @@ crd_card *crd_card_new() {
 	return calloc(1, sizeof(crd_card));
 }
 
+#define HIBYTE(w)       ((uint8_t)(((uint16_t)(w) >> 8)))
+#define LOBYTE(w)       ((uint8_t)(w))
+
+/* Reads a 16-bit value and snarfs it into the card's oledata,
+ * increasing the buffer size if needed. */
+uint16_t ReadWord(FILE *fp, crd_card *card, int *res, int *olebufsize)
+{
+	bool bigEndian = IsBigEndian();
+
+	uint16_t result;
+	uint8_t buf[2];
+	(*res) = fread(buf, 1, 2, fp);
+
+	if (card->olesize+2 >= *olebufsize) {
+		(*olebufsize) *= 2;
+		card->oledata = realloc(card->oledata, (*olebufsize));
+	}
+	memcpy(card->oledata+card->olesize, buf, 2);
+	card->olesize += 2;
+
+	if (bigEndian) {
+		return (buf[0]<<8)|buf[1];
+	} else {
+		return buf[0]|(buf[1]<<8);
+	}
+}
+
+/* Reads a 32-bit value and snarfs it into the card's oledata,
+ * increasing the buffer size if needed. */
+uint32_t ReadLong(FILE *fp, crd_card *card, int *res, int *olebufsize)
+{
+	bool bigEndian = IsBigEndian();
+
+	uint32_t result;
+	uint8_t buf[4];
+	(*res) = fread(buf, 1, 4, fp);
+
+	if (card->olesize+4 >= *olebufsize) {
+		(*olebufsize) *= 2;
+		card->oledata = realloc(card->oledata, (*olebufsize));
+	}
+	memcpy(card->oledata+card->olesize, buf, 4);
+	card->olesize += 4;
+
+	if (bigEndian) {
+		return (buf[0]<<24)|(buf[1]<<16)|(buf[2]<<8)|buf[3];
+	} else {
+		return buf[0]|(buf[1]<<8)|(buf[2]<<16)|(buf[3]<<24);
+	}
+}
+
+int EatBytes(FILE *fp, crd_card *card, int *olebufsize, uint32_t numbytes)
+{
+	if (card->olesize+numbytes >= *olebufsize) {
+		while (card->olesize+numbytes >= *olebufsize) {
+			(*olebufsize) *= 2;
+		}
+		card->oledata = realloc(card->oledata, (*olebufsize));
+	}
+	int ret = fread(card->oledata+card->olesize, 1, numbytes, fp);
+	card->olesize+=ret;
+	return ret;
+}
+
+bool RdCheckVer(FILE *fp, crd_card *card, int *res, int *olebufsize)
+{
+	uint32_t OLEVer = ReadLong(fp, card, res, olebufsize);
+	/* This had imbalanced parens when I kopiped it. Made a guess
+	 * as to where the missing paren was supposed to go. */
+	OLEVer = (((uint16_t)(LOBYTE(OLEVer))) << 8) | (uint16_t) HIBYTE(OLEVer);
+
+	if (OLEVer == 0x0100) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+/* This is the only function here that I'm really unsure about */
+int RdChkString(FILE *fp, crd_card *card, int *res, int *olebufsize)
+{
+	/* This function assumes the string is null-terminated. If
+	 * not, you can fairly easily grab how long the string is then
+	 * fread that many bytes into the buffer.*/
+	char last;
+	char buf[16];		/* Assuming METAFILEPICT is the
+				 * longest value. 13 is bad luck, so
+				 * make it a nice round 16. */
+	memset(buf, 0, sizeof(buf));
+	*res = 0;
+
+	do {
+		/* The string not being null-terminated would be the
+		 * expected cause of a segfault here. */
+		last = fgetc(fp);
+		buf[*res] = last;
+		(*res)++;
+	} while (last != 0);
+
+	if (card->olesize+(*res) >= *olebufsize) {
+		(*olebufsize) *= 2;
+		card->oledata = realloc(card->oledata, (*olebufsize));
+	}
+	memcpy(card->oledata+card->olesize, buf, (*res));
+	card->olesize += (*res);
+
+	return (!strcmp("METAFILEPICT", buf)) ||
+		(!strcmp("BITMAP", buf)) ||
+		(!strcmp("DIB", buf));
+}
+
+void SkipPresentationObj(FILE *fp, crd_card *card, int *res, int *olebufsize)
+{
+	// Format ID
+	ReadLong(fp, card, res, olebufsize);
+	if (RdChkString(fp, card, res, olebufsize)) {
+		// Width in mmhimetric.
+		ReadLong(fp, card, res, olebufsize);
+		// Height in mmhimetric.
+		ReadLong(fp, card, res, olebufsize);
+		// Presentation data size and data itself
+		*res = EatBytes(fp, card, olebufsize,
+				ReadLong(fp, card, res, olebufsize));
+	} else {
+		// if Clipboard format value is NULL
+		if (!ReadLong(fp, card, res, olebufsize)) {
+			// Read Clipboard format name.
+			*res = EatBytes(fp, card, olebufsize,
+					ReadLong(fp, card, res, olebufsize));
+		}
+		// Presentation data size and data itself.}
+		*res = EatBytes(fp, card, olebufsize,
+				ReadLong(fp, card, res, olebufsize));
+	}
+}
+
+/*
+ * Snarfs OLE data into a card.
+ *
+ * https://jeffpar.github.io/kbarchive/kb/099/Q99340/
+ */
+int ole_snarf(FILE *fp, crd_card *card, int *olebufsize)
+{
+	/* Honestly this is going to go untested for now, so no error
+	 * checking.  Check the main load function to find out how to
+	 * do error checking in this area of the codebase. If you find
+	 * yourself staring at this code thinking "who wrote this
+	 * crap", it's M$'s fault. */
+	/* I am open to a C&D so that I can remove this trash and say
+	 * I don't support this particular file format for "legal
+	 * reasons" */
+	int res;
+
+	if (RdCheckVer(fp, card, &res, olebufsize)) {
+		// 1==> Linked, 2==> Embedded, 3==> Static
+		uint32_t format = ReadLong(fp, card, &res, olebufsize);
+		// Class String
+		res = EatBytes(fp, card, olebufsize,
+			       ReadLong(fp, card, &res, olebufsize));
+
+		if (format == 3) { /* Static object */
+			// Width in mmhimetric.
+			ReadLong(fp, card, &res, olebufsize);
+			// Height in mmhimetric.
+			ReadLong(fp, card, &res, olebufsize);
+			// Presentation data size and data itself.
+			res = EatBytes(fp, card, olebufsize,
+				       ReadLong(fp, card, &res, olebufsize));
+		} else {	/* Embedded/linked object */
+			// Topic string.
+			res = EatBytes(fp, card, olebufsize,
+				       ReadLong(fp, card, &res, olebufsize));
+			// Item string.
+			res = EatBytes(fp, card, olebufsize,
+				       ReadLong(fp, card, &res, olebufsize));
+			if (format == 2){ /* Embedded object */
+				// Native data and its size.
+				res = EatBytes(fp, card, olebufsize,
+					       ReadLong(fp, card, &res, olebufsize));
+				// Read and eat the presentation object.
+				SkipPresentationObj(fp, card, &res, olebufsize);
+			} else { /* Linked object */
+				// Network name.
+				res = EatBytes(fp, card, olebufsize,
+					       ReadLong(fp, card, &res, olebufsize));
+				// Network type and net driver version.
+				ReadLong(fp, card, &res, olebufsize);
+				// Link update options.
+				ReadLong(fp, card, &res, olebufsize);
+				// Read and eat the presentation object.}}
+				SkipPresentationObj(fp, card, &res, olebufsize);
+			}
+		}
+	}
+	return res;
+}
+
 /* Loads a CRD file into a structure. */
 int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 {
@@ -267,10 +464,29 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 				}
 				nbytes += res;
 			} else if (cardfile->signature == CRD_SIG_RRG) {
-				/* Not yet implemented. */
-				/* Pseudocode follows. */
-				/* Read the object id */
-				/* Read over the OLE object, copying into oledata */
+				/* Feel free to tweak this for perf. I
+				 * just chose a round number that felt
+				 * right.*/
+				int olebufsize = 0x1000;
+				card->oledata = malloc(olebufsize);
+				/* Object ID */
+				ReadLong(fp, card, &res, &olebufsize);
+				/* OLE object */
+				ole_snarf(fp, card, &olebufsize);
+				/* DIB character width */
+				ReadWord(fp, card, &res, &olebufsize);
+				/* DIB character height */
+				ReadWord(fp, card, &res, &olebufsize);
+				/* X coord U-L */
+				ReadWord(fp, card, &res, &olebufsize);
+				/* Y coord U-L */
+				ReadWord(fp, card, &res, &olebufsize);
+				/* X coord L-R */
+				ReadWord(fp, card, &res, &olebufsize);
+				/* Y coord L-R */
+				ReadWord(fp, card, &res, &olebufsize);
+				/* embedded=0, linked=1, static=2 */
+				ReadWord(fp, card, &res, &olebufsize);
 			}
 		}
 
