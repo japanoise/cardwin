@@ -2,7 +2,8 @@
 #include <unistd.h>
 #include "data.h"
 
-void print_json_string(char *str) {
+void print_json_string(char *str)
+{
 	putchar('"');
 	for (int idx = 0; str[idx]; idx++) {
 		if (str[idx] == '\r') {
@@ -14,7 +15,7 @@ void print_json_string(char *str) {
 		} else if (str[idx] == '\\') {
 			printf("\\\\");
 		} else if (str[idx] < 0x20) {
-			printf("\\u%04X", 0xFF&str[idx]);
+			printf("\\u%04X", 0xFF & str[idx]);
 		} else if (str[idx] > '~') {
 			/* Very much not ideal (it will create
 			 * mojibake), but older data is almost
@@ -24,7 +25,7 @@ void print_json_string(char *str) {
 			 * should know what encoding the file is in
 			 * and use a little creative engineering to
 			 * update the data from there. */
-			printf("\\u%04X", 0xFF&str[idx]);
+			printf("\\u%04X", 0xFF & str[idx]);
 		} else if (str[idx] == '"') {
 			printf("\\\"");
 		} else {
@@ -34,13 +35,14 @@ void print_json_string(char *str) {
 	putchar('"');
 }
 
-void print_json_bytes(uint8_t *bytes, int len) {
+void print_json_bytes(uint8_t *bytes, int len)
+{
 	putchar('[');
 	for (int i = 0; i < len; i++) {
 		if (i != 0) {
 			putchar(',');
 		}
-		printf(" %d", 0xFF&bytes[i]);
+		printf(" %d", 0xFF & bytes[i]);
 	}
 	putchar(' ');
 	putchar(']');
@@ -57,9 +59,7 @@ int main(int argc, char *argv[])
 
 	crd_cardfile *data = crd_cardfile_new();
 	if (!crd_cardfile_load(data, argv[1])) {
-		fprintf(stderr,
-			"%s: error reading cardfile\n",
-			argv[0]);
+		fprintf(stderr, "%s: error reading cardfile\n", argv[0]);
 		crd_cardfile_destroy(data);
 		return 1;
 	}

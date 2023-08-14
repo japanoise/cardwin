@@ -13,17 +13,13 @@ int main(int argc, char *argv[])
 
 	crd_cardfile *data = crd_cardfile_new();
 	if (!crd_cardfile_load(data, argv[1])) {
-		fprintf(stderr,
-			"%s: error reading cardfile\n",
-			argv[0]);
+		fprintf(stderr, "%s: error reading cardfile\n", argv[0]);
 		crd_cardfile_destroy(data);
 		return 1;
 	}
 
 	if (!crd_cardfile_save(data, "scratch/testOut.crd")) {
-		fprintf(stderr,
-			"%s: error writing cardfile\n",
-			argv[0]);
+		fprintf(stderr, "%s: error writing cardfile\n", argv[0]);
 		crd_cardfile_destroy(data);
 		return 1;
 	}

@@ -6,51 +6,59 @@
 #include <unistd.h>
 #include "data.h"
 
-bool fexist(char *path) {
-	return access( path, F_OK ) == 0;
+bool fexist(char *path)
+{
+	return access(path, F_OK) == 0;
 }
 
-bool IsBigEndian() {
-    int i=1;
-    return ! *((char *)&i);
+bool IsBigEndian()
+{
+	int i = 1;
+	return !*((char *)&i);
 }
 
-void write_u16(FILE *outfile, uint16_t output) {
-	fputc(output&0xFF, outfile);
-	fputc((output>>8)&0xFF, outfile);
+void write_u16(FILE *outfile, uint16_t output)
+{
+	fputc(output & 0xFF, outfile);
+	fputc((output >> 8) & 0xFF, outfile);
 }
 
-void write_u32(FILE *outfile, uint32_t output) {
-	fputc(output&0xFF, outfile);
-	fputc((output>>8)&0xFF, outfile);
-	fputc((output>>16)&0xFF, outfile);
-	fputc((output>>24)&0xFF, outfile);
+void write_u32(FILE *outfile, uint32_t output)
+{
+	fputc(output & 0xFF, outfile);
+	fputc((output >> 8) & 0xFF, outfile);
+	fputc((output >> 16) & 0xFF, outfile);
+	fputc((output >> 24) & 0xFF, outfile);
 }
 
-int string_write_u16(char *s, int idx, uint16_t output) {
-	s[idx] = output&0xFF;
-	s[idx+1] = (output>>8)&0xFF;
+int string_write_u16(char *s, int idx, uint16_t output)
+{
+	s[idx] = output & 0xFF;
+	s[idx + 1] = (output >> 8) & 0xFF;
 	return 2;
 }
 
-int string_write_u32(char *s, int idx, uint32_t output) {
-	s[idx] = output&0xFF;
-	s[idx+1] = (output>>8)&0xFF;
-	s[idx+2] = (output>>16)&0xFF;
-	s[idx+3] = (output>>24)&0xFF;
+int string_write_u32(char *s, int idx, uint32_t output)
+{
+	s[idx] = output & 0xFF;
+	s[idx + 1] = (output >> 8) & 0xFF;
+	s[idx + 2] = (output >> 16) & 0xFF;
+	s[idx + 3] = (output >> 24) & 0xFF;
 	return 4;
 }
 
-int read_u8(FILE *input, uint8_t *result) {
+int read_u8(FILE *input, uint8_t *result)
+{
 	int by = fgetc(input);
 	if (by == EOF) {
 		return 0;
 	}
-	*result = (uint8_t) by;
+	*result = (uint8_t)by;
 	return 1;
 }
 
-int read_u16(FILE *input, uint16_t *result) {
+int read_u16(FILE *input, uint16_t *result)
+{
 	/* Not sure if this actually works on big endian systems */
 	bool bigEndian = IsBigEndian();
 	*result = 0;
@@ -71,13 +79,14 @@ int read_u16(FILE *input, uint16_t *result) {
 	if (bigEndian) {
 		*result |= by;
 	} else {
-		*result |= (by<<8);
+		*result |= (by << 8);
 	}
 
 	return 2;
 }
 
-int read_u32(FILE *input, uint32_t *result) {
+int read_u32(FILE *input, uint32_t *result)
+{
 	bool bigEndian = IsBigEndian();
 	*result = 0;
 	int by = fgetc(input);
@@ -95,9 +104,9 @@ int read_u32(FILE *input, uint32_t *result) {
 		return 0;
 	}
 	if (bigEndian) {
-		*result |= (by<<16);
+		*result |= (by << 16);
 	} else {
-		*result |= (by<<8);
+		*result |= (by << 8);
 	}
 
 	by = fgetc(input);
@@ -105,9 +114,9 @@ int read_u32(FILE *input, uint32_t *result) {
 		return 0;
 	}
 	if (bigEndian) {
-		*result |= (by<<8);
+		*result |= (by << 8);
 	} else {
-		*result |= (by<<16);
+		*result |= (by << 16);
 	}
 
 	by = fgetc(input);
@@ -117,7 +126,7 @@ int read_u32(FILE *input, uint32_t *result) {
 	if (bigEndian) {
 		*result |= by;
 	} else {
-		*result |= (by<<24);
+		*result |= (by << 24);
 	}
 
 	return 4;
@@ -130,12 +139,13 @@ crd_cardfile *crd_cardfile_new()
 }
 
 /* Create a blank card */
-crd_card *crd_card_new() {
+crd_card *crd_card_new()
+{
 	return calloc(1, sizeof(crd_card));
 }
 
-#define HIBYTE(w)       ((uint8_t)(((uint16_t)(w) >> 8)))
-#define LOBYTE(w)       ((uint8_t)(w))
+#define HIBYTE(w) ((uint8_t)(((uint16_t)(w) >> 8)))
+#define LOBYTE(w) ((uint8_t)(w))
 
 /* Reads a 16-bit value and snarfs it into the card's oledata,
  * increasing the buffer size if needed. */
@@ -147,17 +157,17 @@ uint16_t ReadWord(FILE *fp, crd_card *card, int *res, int *olebufsize)
 	uint8_t buf[2];
 	(*res) = fread(buf, 1, 2, fp);
 
-	if (card->olesize+2 >= *olebufsize) {
+	if (card->olesize + 2 >= *olebufsize) {
 		(*olebufsize) *= 2;
 		card->oledata = realloc(card->oledata, (*olebufsize));
 	}
-	memcpy(card->oledata+card->olesize, buf, 2);
+	memcpy(card->oledata + card->olesize, buf, 2);
 	card->olesize += 2;
 
 	if (bigEndian) {
-		return (buf[0]<<8)|buf[1];
+		return (buf[0] << 8) | buf[1];
 	} else {
-		return buf[0]|(buf[1]<<8);
+		return buf[0] | (buf[1] << 8);
 	}
 }
 
@@ -171,30 +181,30 @@ uint32_t ReadLong(FILE *fp, crd_card *card, int *res, int *olebufsize)
 	uint8_t buf[4];
 	(*res) = fread(buf, 1, 4, fp);
 
-	if (card->olesize+4 >= *olebufsize) {
+	if (card->olesize + 4 >= *olebufsize) {
 		(*olebufsize) *= 2;
 		card->oledata = realloc(card->oledata, (*olebufsize));
 	}
-	memcpy(card->oledata+card->olesize, buf, 4);
+	memcpy(card->oledata + card->olesize, buf, 4);
 	card->olesize += 4;
 
 	if (bigEndian) {
-		return (buf[0]<<24)|(buf[1]<<16)|(buf[2]<<8)|buf[3];
+		return (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
 	} else {
-		return buf[0]|(buf[1]<<8)|(buf[2]<<16)|(buf[3]<<24);
+		return buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
 	}
 }
 
 int EatBytes(FILE *fp, crd_card *card, int *olebufsize, uint32_t numbytes)
 {
-	if (card->olesize+numbytes >= *olebufsize) {
-		while (card->olesize+numbytes >= *olebufsize) {
+	if (card->olesize + numbytes >= *olebufsize) {
+		while (card->olesize + numbytes >= *olebufsize) {
 			(*olebufsize) *= 2;
 		}
 		card->oledata = realloc(card->oledata, (*olebufsize));
 	}
-	int ret = fread(card->oledata+card->olesize, 1, numbytes, fp);
-	card->olesize+=ret;
+	int ret = fread(card->oledata + card->olesize, 1, numbytes, fp);
+	card->olesize += ret;
 	return ret;
 }
 
@@ -203,7 +213,7 @@ bool RdCheckVer(FILE *fp, crd_card *card, int *res, int *olebufsize)
 	uint32_t OLEVer = ReadLong(fp, card, res, olebufsize);
 	/* This had imbalanced parens when I kopiped it. Made a guess
 	 * as to where the missing paren was supposed to go. */
-	OLEVer = (((uint16_t)(LOBYTE(OLEVer))) << 8) | (uint16_t) HIBYTE(OLEVer);
+	OLEVer = (((uint16_t)(LOBYTE(OLEVer))) << 8) | (uint16_t)HIBYTE(OLEVer);
 
 	if (OLEVer == 0x0100) {
 		return true;
@@ -219,7 +229,7 @@ int RdChkString(FILE *fp, crd_card *card, int *res, int *olebufsize)
 	 * not, you can fairly easily grab how long the string is then
 	 * fread that many bytes into the buffer.*/
 	char last;
-	char buf[16];		/* Assuming METAFILEPICT is the
+	char buf[16]; /* Assuming METAFILEPICT is the
 				 * longest value. 13 is bad luck, so
 				 * make it a nice round 16. */
 	memset(buf, 0, sizeof(buf));
@@ -233,16 +243,15 @@ int RdChkString(FILE *fp, crd_card *card, int *res, int *olebufsize)
 		(*res)++;
 	} while (last != 0);
 
-	if (card->olesize+(*res) >= *olebufsize) {
+	if (card->olesize + (*res) >= *olebufsize) {
 		(*olebufsize) *= 2;
 		card->oledata = realloc(card->oledata, (*olebufsize));
 	}
-	memcpy(card->oledata+card->olesize, buf, (*res));
+	memcpy(card->oledata + card->olesize, buf, (*res));
 	card->olesize += (*res);
 
-	return (!strcmp("METAFILEPICT", buf)) ||
-		(!strcmp("BITMAP", buf)) ||
-		(!strcmp("DIB", buf));
+	return (!strcmp("METAFILEPICT", buf)) || (!strcmp("BITMAP", buf)) ||
+	       (!strcmp("DIB", buf));
 }
 
 void SkipPresentationObj(FILE *fp, crd_card *card, int *res, int *olebufsize)
@@ -302,23 +311,25 @@ int ole_snarf(FILE *fp, crd_card *card, int *olebufsize)
 			// Presentation data size and data itself.
 			res = EatBytes(fp, card, olebufsize,
 				       ReadLong(fp, card, &res, olebufsize));
-		} else {	/* Embedded/linked object */
+		} else { /* Embedded/linked object */
 			// Topic string.
 			res = EatBytes(fp, card, olebufsize,
 				       ReadLong(fp, card, &res, olebufsize));
 			// Item string.
 			res = EatBytes(fp, card, olebufsize,
 				       ReadLong(fp, card, &res, olebufsize));
-			if (format == 2){ /* Embedded object */
+			if (format == 2) { /* Embedded object */
 				// Native data and its size.
 				res = EatBytes(fp, card, olebufsize,
-					       ReadLong(fp, card, &res, olebufsize));
+					       ReadLong(fp, card, &res,
+							olebufsize));
 				// Read and eat the presentation object.
 				SkipPresentationObj(fp, card, &res, olebufsize);
 			} else { /* Linked object */
 				// Network name.
 				res = EatBytes(fp, card, olebufsize,
-					       ReadLong(fp, card, &res, olebufsize));
+					       ReadLong(fp, card, &res,
+							olebufsize));
 				// Network type and net driver version.
 				ReadLong(fp, card, &res, olebufsize);
 				// Link update options.
@@ -381,7 +392,7 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 	nbytes += res;
 
 	/* Now we can allocate the memory for the card array */
-	cardfile->cards = calloc(cardfile->ncards, sizeof(crd_cardfile*));
+	cardfile->cards = calloc(cardfile->ncards, sizeof(crd_cardfile *));
 
 	/* Cool, now let's start reading index entries */
 	/*
@@ -449,7 +460,7 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 		 * object flag in RRG. */
 		if (word) {
 			if (cardfile->signature == CRD_SIG_MGC) {
-				card->bmpsize = 8+word;
+				card->bmpsize = 8 + word;
 				/* For now, copy the data and do
 				 * nothing with it. In a later
 				 * version, convert it to an agnostic
@@ -457,8 +468,8 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 				 * translate to Cairo or SDL
 				 * drawing)*/
 				card->bmpdata = malloc(card->bmpsize);
-				res = fread(
-					card->bmpdata, 1, card->bmpsize, fp);
+				res = fread(card->bmpdata, 1, card->bmpsize,
+					    fp);
 				if (res != card->bmpsize) {
 					goto cleanup;
 				}
@@ -501,7 +512,7 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 		}
 		nbytes += res;
 		card->datalen = word;
-		card->databuf = word+1;
+		card->databuf = word + 1;
 
 		/* Now the actual text data. */
 		card->data = calloc(card->databuf, 1);
@@ -528,7 +539,7 @@ int crd_cardfile_save(crd_cardfile *cardfile, char *filename)
 	memset(nulls, 0, sizeof(nulls));
 	uint32_t offset;
 
-	FILE * out = fopen(filename, "wb");
+	FILE *out = fopen(filename, "wb");
 	if (out == NULL) {
 		return 0;
 	}
@@ -546,14 +557,14 @@ int crd_cardfile_save(crd_cardfile *cardfile, char *filename)
 		break;
 	}
 	write_u16(out, cardfile->ncards);
-	offset += cardfile->ncards*52;
+	offset += cardfile->ncards * 52;
 
 	/* Write header data */
 	for (int i = 0; i < cardfile->ncards; i++) {
 		crd_card *card = cardfile->cards[i];
 		fwrite(nulls, 1, 6, out);
 		write_u32(out, offset);
-		offset += 4+card->bmpsize+card->olesize+card->datalen;
+		offset += 4 + card->bmpsize + card->olesize + card->datalen;
 		fputc(card->flag, out);
 		fwrite(card->title, 1, 40, out);
 		fputc(0, out);
@@ -565,7 +576,7 @@ int crd_cardfile_save(crd_cardfile *cardfile, char *filename)
 		switch (cardfile->signature) {
 		case CRD_SIG_MGC:
 			if (card->bmpsize) {
-				write_u16(out, card->bmpsize-8);
+				write_u16(out, card->bmpsize - 8);
 				fwrite(card->bmpdata, 1, card->bmpsize, out);
 			} else {
 				write_u16(out, 0);
@@ -626,9 +637,9 @@ void crd_cardfile_delete_card(crd_cardfile *cardfile, int at)
 	}
 
 	card_destroy(cardfile->cards[at]);
-	if (at < cardfile->ncards-1) {
-		memmove(cardfile->cards[at], cardfile->cards[at+1],
-			sizeof(crd_card*)*(cardfile->ncards-1));
+	if (at < cardfile->ncards - 1) {
+		memmove(cardfile->cards[at], cardfile->cards[at + 1],
+			sizeof(crd_card *) * (cardfile->ncards - 1));
 	}
 
 	cardfile->ncards--;

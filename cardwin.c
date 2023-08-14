@@ -330,8 +330,8 @@ void men_move(gpointer data, guint action, GtkWidget *widget)
 	case 1: // new
 		new_cards();
 		gtk_text_buffer_set_text(
-			gtk_text_view_get_buffer(
-				GTK_TEXT_VIEW(card_data)), "", 0);
+			gtk_text_view_get_buffer(GTK_TEXT_VIEW(card_data)), "",
+			0);
 		gtk_editable_delete_text(GTK_EDITABLE(card_header), 0, -1);
 		break;
 	case 2: // save
@@ -582,7 +582,8 @@ int main(int argc, char *argv[])
 					      listbox);
 	gtk_box_pack_start(GTK_BOX(hbox), scrwin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), card_header, FALSE, FALSE, 0); // 28/04/2001
+	gtk_box_pack_start(GTK_BOX(vbox), card_header, FALSE, FALSE,
+			   0); // 28/04/2001
 	gtk_box_pack_start(GTK_BOX(vbox), card_data, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), div3, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(vbox), statdata, FALSE, FALSE, 0);
@@ -668,7 +669,8 @@ void l_select(GtkWidget *widget, guint ndata) // widget is callback's listbox
 		GtkTextIter start, end;
 		gtk_text_buffer_get_start_iter(buf, &start);
 		gtk_text_buffer_get_end_iter(buf, &end);
-		gchar *entry = gtk_text_buffer_get_text(buf, &start, &end , FALSE);
+		gchar *entry =
+			gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 		node = g_list_nth(rdata, count);
 		if (g_strcasecmp((gchar *)entry, (gchar *)node->data) != 0) {
 			node->data = (gpointer)
