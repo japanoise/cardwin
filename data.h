@@ -20,6 +20,7 @@ enum tag_signature {
 
 typedef enum tag_signature crd_signature;
 
+/* clang-format off */
 typedef struct {
 	char title[40];		/* Card title */
 	char *data;		/* The text data on the card */
@@ -40,6 +41,7 @@ typedef struct {
 	uint32_t lastObjectId;	 /* (RRG only) ID of the last object in the file */
 	crd_card **cards;	 /* The card data, array of pointers */
 } crd_cardfile;
+/* clang-format on */
 
 /* Create a blank CRD structure */
 crd_cardfile *crd_cardfile_new();
