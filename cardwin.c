@@ -510,8 +510,8 @@ int main(int argc, char *argv[])
 
 	// create and initialize items as needed:
 	listbox = gtk_list_new();
-	statdata = gtk_entry_new();
-	gtk_entry_set_editable(GTK_ENTRY(statdata), FALSE);
+	statdata = gtk_text_view_new();
+	gtk_text_view_set_editable(GTK_TEXT_VIEW(statdata), FALSE);
 	card_header = gtk_entry_new();
 	gtk_entry_set_editable(GTK_ENTRY(card_header), FALSE);
 	card_data = gtk_text_view_new();
@@ -704,7 +704,8 @@ void currstat()
 	ptr1 = g_list_nth_data(rindx, count);
 	ptr2 = g_list_nth_data(rdata, count);
 	//gtk_text_freeze (GTK_TEXT(statdata));
-	gtk_editable_delete_text(GTK_EDITABLE(statdata), 0, -1);
+	gtk_text_buffer_set_text(
+		gtk_text_view_get_buffer(GTK_TEXT_VIEW(statdata)), "", 0);
 	head = g_strdup_printf(
 		"Entries: %d   Count: %d\nIndex: %d (data length: %d)\n%s",
 		ccnt, count, strlen(ptr1), strlen(ptr2), ptr1);

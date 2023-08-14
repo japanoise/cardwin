@@ -3,3 +3,4 @@ cardwin
 *.crd
 *.o
 /compile_commands.json
+/crd2json

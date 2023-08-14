@@ -13,6 +13,14 @@ probably using MSYS2, and go from there. I will work on a better build system
 once the program is stable and if interest is generated I will also provide
 pre-compiled binaries.
 
+You can optionally run `make crd2json` to build a simple C program that converts
+a CRD file to a human-readable JSON file, which may be useful as an intermediate
+format to convert to other formats. I'm half-planning to write a CRD -> HTML
+(maybe even TiddlyWiki) converter using this functionality...  Note that this
+program uses a very stupid solution to convert non-ASCII bytes to UTF-8, and the
+operator may need to make a manual transformation to preserve non-ASCII
+characters, as the locale information is not preserved in the CRD file format.
+
 ## Copying
 
 No copyright notice was present in the source code itself; however, the
@@ -51,3 +59,12 @@ The original sources:
 
 * [sourceforge project page](https://sourceforge.net/projects/cardwin/)
 * [sourceforge website](https://cardwin.sourceforge.net/)
+
+Useful links (especially for developers):
+
+* [Cardfile at Just Solve The File Format
+  Problem](http://fileformats.archiveteam.org/wiki/Cardfile)
+* [Q99340: Windows 3.1 Card File
+  Format](https://jeffpar.github.io/kbarchive/kb/099/Q99340/)
+* [GTK2 API Documentation](https://developer-old.gnome.org/gtk2/stable/) (such
+  as it is...)

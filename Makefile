@@ -11,6 +11,9 @@ debug: $(PROGNAME)
 $(PROGNAME): $(OBJECTS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+crd2json: crd2json.o data.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
 clean:
 	rm -rf *.o
 	rm -rf *.exe
