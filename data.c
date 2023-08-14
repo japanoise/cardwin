@@ -488,6 +488,8 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 				/* embedded=0, linked=1, static=2 */
 				ReadWord(fp, card, &res, &olebufsize);
 			}
+		} else {
+			card->bmpsize = 0;
 		}
 
 		/* Size of the data in bytes. I believe this is not
@@ -518,10 +520,71 @@ cleanup:
 	return 0;
 }
 
-/* Saves a cardfile to the given filename. Returns any io errors
- * encountered. */
+/* Saves a cardfile to the given filename. Returns falsey if it
+ * encounters an io error */
 int crd_cardfile_save(crd_cardfile *cardfile, char *filename)
 {
+	char nulls[6];
+	memset(nulls, 0, sizeof(nulls));
+	uint32_t offset;
+
+	FILE * out = fopen(filename, "wb");
+	if (out == NULL) {
+		return 0;
+	}
+
+	/* Write file sig */
+	switch (cardfile->signature) {
+	case CRD_SIG_MGC:
+		offset = 5;
+		fprintf(out, "MGC");
+		break;
+	case CRD_SIG_RRG:
+		offset = 9;
+		fprintf(out, "RRG");
+		write_u32(out, cardfile->lastObjectId);
+		break;
+	}
+	write_u16(out, cardfile->ncards);
+	offset += cardfile->ncards*52;
+
+	/* Write header data */
+	for (int i = 0; i < cardfile->ncards; i++) {
+		crd_card *card = cardfile->cards[i];
+		fwrite(nulls, 1, 6, out);
+		write_u32(out, offset);
+		offset += 4+card->bmpsize+card->olesize+card->datalen;
+		fputc(card->flag, out);
+		fwrite(card->title, 1, 40, out);
+		fputc(0, out);
+	}
+
+	/* Write card data */
+	for (int i = 0; i < cardfile->ncards; i++) {
+		crd_card *card = cardfile->cards[i];
+		switch (cardfile->signature) {
+		case CRD_SIG_MGC:
+			if (card->bmpsize) {
+				write_u16(out, card->bmpsize-8);
+				fwrite(card->bmpdata, 1, card->bmpsize, out);
+			} else {
+				write_u16(out, 0);
+			}
+			break;
+		case CRD_SIG_RRG:
+			if (card->olesize > 0) {
+				write_u16(out, 1);
+				fwrite(card->oledata, 1, card->olesize, out);
+			} else {
+				write_u16(out, 0);
+			}
+			break;
+		}
+		write_u16(out, card->datalen);
+		fwrite(card->data, 1, card->datalen, out);
+	}
+
+	fclose(out);
 	return 1;
 }
 

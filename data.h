@@ -48,8 +48,8 @@ crd_cardfile *crd_cardfile_new();
  * successful, 0 otherwise. */
 int crd_cardfile_load(crd_cardfile *cardfile, char *filename);
 
-/* Saves a cardfile to the given filename. Returns any io errors
- * encountered. */
+/* Saves a cardfile to the given filename. Returns falsey if it
+ * encounters an io error */
 int crd_cardfile_save(crd_cardfile *cardfile, char *filename);
 
 /* Frees a previously allocated cardfile */

@@ -4,3 +4,4 @@ cardwin
 *.o
 /compile_commands.json
 /crd2json
+/savetest
