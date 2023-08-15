@@ -1,8 +1,15 @@
-cardwin
-/.cache/
-*.crd
-*.o
-/compile_commands.json
+# Executables & objects
+/cardwin
 /crd2json
 /savetest
 /edittest
+*.exe
+*.o
+
+# Test data
+/scratch
+*.crd
+
+# LSP turds
+/.cache/
+/compile_commands.json
