@@ -1,12 +1,12 @@
 #include "data.h"
 
-int main(int argc, char  *argv[])
+int main(int argc, char *argv[])
 {
 	crd_cardfile *deck = crd_cardfile_new();
 
 	crd_card *card = crd_cardfile_add_new_card(deck, "Alice");
 	crd_card_set_data(card, "Alice lives at:\r\n21 Fake Street\n"
-			  "Dover, Delaware");
+				"Dover, Delaware");
 	card = crd_cardfile_add_new_card(deck, "Delia");
 	crd_card_set_data(card, "Delia owns a pet ferret");
 	card = crd_cardfile_add_new_card(deck, "Charlie");

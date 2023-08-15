@@ -21,6 +21,9 @@ edittest: CFLAGS+=-g -O0
 edittest: edittest.o data.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+format:
+	clang-format -i *.c *.h
+
 clean:
 	rm -rf *.o
 	rm -rf *.exe
