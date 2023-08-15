@@ -392,7 +392,8 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 	nbytes += res;
 
 	/* Now we can allocate the memory for the card array */
-	cardfile->cards = calloc(cardfile->ncards, sizeof(crd_cardfile *));
+	cardfile->bufsize = cardfile->ncards;
+	cardfile->cards = calloc(cardfile->ncards, sizeof(crd_card *));
 
 	/* Cool, now let's start reading index entries */
 	/*
@@ -512,10 +513,9 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename)
 		}
 		nbytes += res;
 		card->datalen = word;
-		card->databuf = word + 1;
 
 		/* Now the actual text data. */
-		card->data = calloc(card->databuf, 1);
+		card->data = calloc(card->datalen+1, 1);
 		res = fread(card->data, 1, card->datalen, fp);
 		if (res != card->datalen) {
 			goto cleanup;
@@ -617,15 +617,69 @@ void crd_cardfile_destroy(crd_cardfile *cardfile)
 	free(cardfile);
 }
 
+int cmp_card_titles(const void *l, const void *r)
+{
+	crd_card *const *left = l;
+	crd_card *const *right = r;
+	return strcmp((*left)->title, (*right)->title);
+}
+
 /* Adds a card to the cardfile. Returns the card created, or null if
  * it cannot (i.e. if there's no space)
  *
- * The card is inserted into the list in alphabetical order, so a
- * memmove may be needed.
+ * The card is inserted into the list in alphabetical order.
  */
 crd_card *crd_cardfile_add_new_card(crd_cardfile *cardfile, char *title)
 {
-	return NULL;
+	if (cardfile->ncards == 0xFFFF) {
+		/* Reached maximum number of cards */
+		return NULL;
+	}
+
+	crd_card *retval = calloc(1, sizeof(crd_card));
+	strncpy(retval->title, title, 40);
+
+	if (cardfile->ncards+1 >= cardfile->bufsize) {
+		if (cardfile->bufsize == 0) {
+			cardfile->bufsize = 8;
+		}
+		cardfile->bufsize*=2;
+		cardfile->cards = realloc(
+			cardfile->cards, sizeof(crd_card*)*cardfile->bufsize);
+		for(int i = cardfile->ncards; i < cardfile->bufsize; i++) {
+			cardfile->cards[i] = NULL;
+		}
+	}
+
+	cardfile->cards[cardfile->ncards] = retval;
+	cardfile->ncards++;
+
+	qsort(cardfile->cards,
+	      cardfile->ncards,
+	      sizeof(crd_card*),
+	      cmp_card_titles);
+
+	return retval;
+}
+
+/* Update the data in card to string value & convert unix line endings */
+void crd_card_set_data(crd_card *card, char *data)
+{
+	int len = strlen(data);
+	free(card->data);
+	card->data = calloc((len*2)+1, 1);
+
+	bool cr = false;
+	int j = 0;
+	for (int i = 0; i < len; i++) {
+		if (data[i] == '\n' && !cr) {
+			card->data[j++] = '\r';
+		}
+		cr = (data[i] == '\r');
+		card->data[j++] = data[i];
+	}
+	card->datalen=j;
+	card->data = realloc(card->data, card->datalen+1);
 }
 
 /* Deletes a card from the cardfile, freeing the memory allocated for

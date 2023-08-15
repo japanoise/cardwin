@@ -17,7 +17,12 @@ crd2json: crd2json.o data.o
 savetest: savetest.o data.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+edittest: CFLAGS+=-g -O0
+edittest: edittest.o data.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
 clean:
 	rm -rf *.o
 	rm -rf *.exe
 	rm -rf $(PROGNAME)
+	rm -rf edittest savetest crd2json
