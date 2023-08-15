@@ -9,6 +9,7 @@
 # Test data
 /scratch
 *.crd
+*.CRD
 
 # LSP turds
 /.cache/

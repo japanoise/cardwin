@@ -68,3 +68,5 @@ Useful links (especially for developers):
   Format](https://jeffpar.github.io/kbarchive/kb/099/Q99340/)
 * [GTK2 API Documentation](https://developer-old.gnome.org/gtk2/stable/) (such
   as it is...)
+* [Some samples of the file format can be found
+  here](https://web.archive.org/web/20220323222741/https://telparia.com/fileFormatSamples/document/cardfile/)
