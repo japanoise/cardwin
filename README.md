@@ -5,6 +5,39 @@ very old (pre-98) versions of Windows. It is capable of opening from and saving
 to the same file format. It uses the relatively up-to-date GTK+ toolkit for a
 cross-platform GUI, and should work on both 32-bit and 64-bit systems.
 
+## Status
+
+CardWin is in "minimum viable product" (MVP) status:
+
+* You can open cardfiles which are in MGC format with a high degree of accuracy
+* You can view, edit, and save text in MGC format just as you'd expect
+* CardWin will not clobber any existing bitmap data - it'll copy it into memory
+  but leave it alone, i.e. will not display or edit it.
+* Cardfiles produced will be byte-for-byte identical with cardfiles produced by
+  the original executable
+* Cardfiles produced should be compatible with and usable in the original
+  executable
+
+You can check if your files are compatible with CardWin by checking if the first
+three bytes of the file are MGC. If they are RRG, DKO or something else, they're
+probably not compatible - please open an issue and send me the cardfile if you
+can, so I can improve the code.
+
+ToDo:
+
+* Improve the GUI. Modernize it a bit, make it resizable, port it to GTK3 (but
+  not GTK4. I hate GTK4) or even to qt or an imgui or something.
+* A way to search cards. Full text search is possible and trivial, would just
+  need the interface wiring up.
+* Displaying bitmaps. Simple enough - just read the data and construct a gtk
+  image when displaying a card that has bmpsize > 0
+* Once bitmaps can be displayed, a way to CRUD them or export them will be
+  needed.
+* Deal with RRG & DKO format. Needs:
+  1. Sample data. I have 1 RRG cardfile and no DKO cardfiles.
+  2. A better documentation of the OLE format
+  3. Ideally, for the bitmap functionality to be ready
+
 ## Building
 
 CardWin uses a GNU makefile. Linux users that have GTK2 installed should just be
@@ -38,14 +71,16 @@ modifications to compile. GTK is a very bad and poorly-documented API
 (apparently little has changed in that regard since 2001) and is made worse by
 having to use it from C when it really wants to be in an OO language such as
 C++. However, it has future-proofed Cam's old code to some extent. Only a
-handful of features were deprecated since the 2001 release, most annoyingly the
-single-line textboxes. `gtk_text` -> `gtk_entry` *seems* to be an OK update
-path, but more work is definitely needed.
+handful of features were deprecated since the 2001 release.
 
-The status of the source itself is... not great. Lots of globals and weird
-engineering choices. However, it's a small file and thus probably salvageable.
-Currently it only reads `MGC`-type crd files, but the website documents both
-formats. A little refactoring will be needed to make it read both.
+I've rewritten the code, but anyone familiar with one version will note the
+broad strokes are the same. Some functions are line-by-line the same or almost
+the same. But we have some advantages!
+
+1. It compiles with a (relatively) recent version of GTK that's not hard to get
+2. It can save your changes
+3. It has a "dirty buffer" indicator that works
+4. It can at least attempt to read RRG-style cardfiles
 
 As for me, I'm a retro computing enthusiast and I've heard good things about
 Windows 3.11's `cardfile.exe`. Having used it I am honestly more fond of

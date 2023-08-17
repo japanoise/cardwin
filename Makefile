@@ -1,7 +1,7 @@
 CFLAGS=$(shell pkg-config --cflags gtk+-2.0)
 LDFLAGS=$(shell pkg-config --libs gtk+-2.0)
 PROGNAME=cardwin
-OBJECTS=cardwin.o
+OBJECTS=data.o main.o
 
 all: $(PROGNAME)
 

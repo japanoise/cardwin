@@ -56,6 +56,9 @@ int crd_cardfile_load(crd_cardfile *cardfile, char *filename);
  * encounters an io error */
 int crd_cardfile_save(crd_cardfile *cardfile, char *filename);
 
+/* Wipes, but does not dealloc, the cardfile (deallocs cards) */
+void crd_cardfile_clear(crd_cardfile *cardfile);
+
 /* Frees a previously allocated cardfile */
 void crd_cardfile_destroy(crd_cardfile *cardfile);
 

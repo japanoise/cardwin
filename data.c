@@ -6,11 +6,6 @@
 #include <unistd.h>
 #include "data.h"
 
-bool fexist(char *path)
-{
-	return access(path, F_OK) == 0;
-}
-
 bool IsBigEndian()
 {
 	int i = 1;
@@ -617,6 +612,20 @@ void crd_cardfile_destroy(crd_cardfile *cardfile)
 	free(cardfile);
 }
 
+/* Wipes, but does not dealloc, the cardfile (does dealloc cards) */
+void crd_cardfile_clear(crd_cardfile *cardfile)
+{
+	for (int i = 0; i < cardfile->ncards; i++) {
+		card_destroy(cardfile->cards[i]);
+		cardfile->cards[i] = NULL;
+	}
+	crd_card **cards = cardfile->cards;
+	int bufsize = cardfile->bufsize;
+	memset(cardfile, 0, sizeof(crd_cardfile));
+	cardfile->cards = cards;
+	cardfile->bufsize = bufsize;
+}
+
 int cmp_card_titles(const void *l, const void *r)
 {
 	crd_card *const *left = l;
@@ -651,6 +660,8 @@ crd_card *crd_cardfile_add_new_card(crd_cardfile *cardfile, char *title)
 			cardfile->cards[i] = NULL;
 		}
 	}
+
+	retval->data = calloc(8, 0);
 
 	cardfile->cards[cardfile->ncards] = retval;
 	cardfile->ncards++;
@@ -691,8 +702,10 @@ void crd_cardfile_delete_card(crd_cardfile *cardfile, int at)
 
 	card_destroy(cardfile->cards[at]);
 	if (at < cardfile->ncards - 1) {
-		memmove(cardfile->cards[at], cardfile->cards[at + 1],
-			sizeof(crd_card *) * (cardfile->ncards - 1));
+		/* Can't figure out the memmove magic. Patches welcome. */
+		for (int i = at; i < cardfile->ncards - 1; i++) {
+			cardfile->cards[i] = cardfile->cards[i + 1];
+		}
 	}
 
 	cardfile->ncards--;
