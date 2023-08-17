@@ -702,10 +702,7 @@ void crd_cardfile_delete_card(crd_cardfile *cardfile, int at)
 
 	card_destroy(cardfile->cards[at]);
 	if (at < cardfile->ncards - 1) {
-		/* Can't figure out the memmove magic. Patches welcome. */
-		for (int i = at; i < cardfile->ncards - 1; i++) {
-			cardfile->cards[i] = cardfile->cards[i + 1];
-		}
+		memmove(cardfile->cards + at, cardfile->cards + at + 1, (cardfile->ncards - at - 1) * sizeof(crd_card));
 	}
 
 	cardfile->ncards--;
