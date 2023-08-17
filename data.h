@@ -79,4 +79,14 @@ void crd_card_set_data(crd_card *card, char *data);
  * it. Does a bounds check. */
 void crd_cardfile_delete_card(crd_cardfile *cardfile, int at);
 
+/* Puts bitmap information into the pointed-to values. Does not
+ * allocate any memory - these should be treated as read-only unless
+ * you want to mess up the data structure.
+ *
+ * Returns truthy if card contains a parseable bmp, falsey otherwise.
+ */
+int crd_card_parse_bmp(crd_card *card, uint16_t *width, uint16_t *height,
+		       uint16_t *xcoord, uint16_t *ycoord, uint16_t *datalen,
+		       uint8_t **datastart);
+
 #endif

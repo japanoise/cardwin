@@ -3,6 +3,7 @@
 /crd2json
 /savetest
 /edittest
+/bmpPrint
 *.exe
 *.o
 

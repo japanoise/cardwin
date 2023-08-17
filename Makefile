@@ -21,6 +21,10 @@ edittest: CFLAGS+=-g -O0
 edittest: edittest.o data.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
+bmpPrint: CFLAGS+=-g -O0
+bmpPrint: bmpPrint.o data.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
 format:
 	clang-format -i *.c *.h
 
@@ -28,4 +32,4 @@ clean:
 	rm -rf *.o
 	rm -rf *.exe
 	rm -rf $(PROGNAME)
-	rm -rf edittest savetest crd2json
+	rm -rf edittest savetest crd2json bmpPrint
