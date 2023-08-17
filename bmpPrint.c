@@ -33,29 +33,20 @@ int main(int argc, char *argv[])
 		int rowbytes = width/8;
 		if (width%8) rowbytes++;
 
-		if (rowbytes * height == datalen) {
-			/* image bits aligned to 8 memory bits */
-			for (int y = 0; y < height; y++) {
-				for (int x = 0; x < rowbytes; x++) {
-					uint8_t byte =
-						datastart[(y*rowbytes)+x];
-					for (int i = 0; i < 8; i++) {
-						putchar((byte<<i)&0x80 ?
-							'`':'#');
-					}
+		if (rowbytes * height != datalen) {
+			rowbytes++;
+		}
+
+		/* image bits aligned to 8 memory bits */
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < rowbytes; x++) {
+				uint8_t byte =
+					datastart[(y*rowbytes)+x];
+				for (int i = 0; i < 8; i++) {
+					putchar((byte<<i)&0x80 ?
+						'`':'#');
 				}
-				putchar('\n');
 			}
-		} else {
-			printf("Expected: %d\nActual: %d\nDiff: %d\n",
-			       height*rowbytes,
-			       datalen,
-			       datalen-(height*rowbytes));
-			for (int i = 0; i < datalen; i++) {
-				if (i%16 == 0) putchar('\n');
-				printf("%02x ", datastart[i]);
-			}
-			putchar('\n');
 			putchar('\n');
 		}
 	}
