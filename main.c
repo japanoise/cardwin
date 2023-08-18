@@ -33,6 +33,7 @@ bool data_loading = false;
 bool sync_up = false;
 gint selitem = 0;
 GtkTextBuffer *card_data;
+GdkPixbuf *image_data = NULL;
 
 /* ---=== Global widgets ===--- */
 GtkWidget *window;
@@ -40,6 +41,7 @@ GtkWidget *card_header;
 GtkWidget *listbox;
 GtkWidget *card_data_view;
 GtkWidget *index_entry;
+GtkWidget *image;
 
 /* ---=== Function declarations ===--- */
 
@@ -89,6 +91,62 @@ bool fexist(char *path)
 	return access(path, F_OK) == 0;
 }
 
+void load_bitmap(crd_card *card)
+{
+	uint16_t width, height, xcoord, ycoord, datalen;
+	uint8_t *datastart;
+
+	if (!crd_card_parse_bmp(card, &width, &height, &xcoord, &ycoord,
+				&datalen, &datastart)) {
+		gtk_widget_hide(image);
+		return;
+	}
+
+	int rowbytes = width / 8;
+	/* XXX: integer version of ceiling */
+	if (width % 8) {
+		rowbytes++;
+	}
+	/* XXX: Sometimes there's a junk byte after each row */
+	if (rowbytes * height != datalen) {
+		rowbytes++;
+	}
+
+	image_data =
+		gdk_pixbuf_new(GDK_COLORSPACE_RGB, false, 8, width, height);
+	guchar *pixels = gdk_pixbuf_get_pixels(image_data);
+	int rowstride = gdk_pixbuf_get_rowstride(image_data);
+	int n_channels = gdk_pixbuf_get_n_channels(image_data);
+
+	/* image bits aligned to 8 memory bits */
+	for (int y = 0; y < height; y++) {
+		int destx = 0;
+		for (int x = 0; x < rowbytes; x++) {
+			uint8_t byte = datastart[(y * rowbytes) + x];
+			for (int i = 0; i < 8; i++) {
+				if (destx < width) {
+					guchar *p = pixels + (y * rowstride) +
+						    (destx * n_channels);
+
+					if ((byte << i) & 0x80) {
+						p[0] = 0xFF;
+						p[1] = 0xFF;
+						p[2] = 0xFF;
+					} else {
+						p[0] = 0x00;
+						p[1] = 0x00;
+						p[2] = 0x00;
+					}
+				}
+				destx++;
+			}
+		}
+	}
+
+	gtk_image_set_from_pixbuf(GTK_IMAGE(image), image_data);
+	gtk_widget_show(image);
+}
+
 void data_load()
 {
 	data_loading = true;
@@ -104,6 +162,9 @@ void data_load()
 
 		gtk_entry_set_text(GTK_ENTRY(card_header),
 				   deck->cards[selitem]->title);
+
+		load_bitmap(deck->cards[selitem]);
+
 		for (int i = 0; i < deck->ncards; i++) {
 			GtkWidget *item = gtk_list_item_new_with_label(
 				deck->cards[i]->title);
@@ -114,6 +175,8 @@ void data_load()
 		gtk_text_buffer_set_text(card_data, "", 0);
 
 		gtk_entry_set_text(GTK_ENTRY(card_header), "");
+
+		gtk_widget_hide(image);
 	}
 	gtk_text_view_set_editable(GTK_TEXT_VIEW(card_data_view),
 				   deck->ncards > 0);
@@ -164,6 +227,7 @@ void list_select(GtkWidget *widget, guint ndata)
 	gtk_text_buffer_set_text(card_data, deck->cards[selitem]->data,
 				 deck->cards[selitem]->datalen);
 	gtk_entry_set_text(GTK_ENTRY(card_header), deck->cards[selitem]->title);
+	load_bitmap(deck->cards[selitem]);
 	data_loading = false;
 }
 
@@ -567,6 +631,7 @@ int main(int argc, char *argv[])
 	card_header = gtk_entry_new();
 	card_data = gtk_text_buffer_new(NULL);
 	card_data_view = gtk_text_view_new_with_buffer(card_data);
+	image = gtk_image_new();
 	/* Wire up large gui items */
 	gtk_entry_set_editable(GTK_ENTRY(card_header), false);
 	gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(card_data_view),
@@ -670,7 +735,7 @@ int main(int argc, char *argv[])
 	gtk_box_pack_start(GTK_BOX(card_container), card_data_view, true, true,
 			   0);
 	gtk_box_pack_start(GTK_BOX(card_container), divider_3, false, false, 0);
-	/* Image will go here */
+	gtk_box_pack_start(GTK_BOX(card_container), image, false, false, 0);
 
 	gtk_box_pack_start(GTK_BOX(toplevel_container), menubar, false, false,
 			   0);
@@ -686,6 +751,8 @@ int main(int argc, char *argv[])
 	gtk_window_add_accel_group(GTK_WINDOW(window), accel);
 	gtk_container_add(GTK_CONTAINER(window), toplevel_container);
 	gtk_widget_show_all(window);
+	gtk_widget_set_visible(image, deck->ncards > 0 &&
+					      deck->cards[selitem]->bmpsize);
 
 	/* Hand off to gtk */
 	gtk_main();
