@@ -662,11 +662,6 @@ int main(int argc, char *argv[])
 			false);
 	gtk_widget_set_size_request(listbox_scroll_container, 300, -1);
 
-	gtk_box_pack_start(GTK_BOX(split_container), listbox_scroll_container,
-			   false, false, 0);
-	gtk_box_pack_start(GTK_BOX(split_container), card_container, false,
-			   false, 0);
-
 	gtk_scrolled_window_add_with_viewport(
 		GTK_SCROLLED_WINDOW(listbox_scroll_container), listbox);
 
