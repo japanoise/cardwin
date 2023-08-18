@@ -111,14 +111,14 @@ void load_bitmap(crd_card *card)
 	/* XXX: I've seen malformed bmps with extra data - find the
 	 * start with a heuristic. */
 	if (datalen >= (width * height)) {
-		datalen = (rowbytes+1) * height;
+		datalen = (rowbytes + 1) * height;
 		int j = datalen;
 		/* 0 is black which will rarely be used as a
 		 * background, unless erroneously used. */
-		while (j != rowbytes*height && datastart[j] == 0) {
+		while (j != rowbytes * height && datastart[j] == 0) {
 			j--;
 		}
-		if (j == rowbytes*height) {
+		if (j == rowbytes * height) {
 			datalen = j;
 		}
 	}
