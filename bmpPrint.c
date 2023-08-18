@@ -30,11 +30,29 @@ int main(int argc, char *argv[])
 		}
 		printf("width: %d; height %d; datalen %d\n", width, height,
 		       datalen);
-		int rowbytes = width / 8;
-		if (width % 8)
-			rowbytes++;
 
-		if (rowbytes * height != datalen) {
+		int rowbytes = width / 8;
+		if (width % 8) {
+			rowbytes++;
+		}
+
+		if (datalen >= (width * height)) {
+			/* Malformed bmp with extra data -
+			   find the start with a heuristic. */
+			datalen = (rowbytes+1) * height;
+			int j = datalen;
+			/* 0 is black which will rarely be used as a background,
+			 * but is used for extra data in malformed bmps.
+			 */
+			while (j != rowbytes*height && datastart[j] == 0) {
+				j--;
+			}
+			if (j == rowbytes*height) {
+				datalen = j;
+			}
+		}
+
+		if ((rowbytes+1) * height == datalen) {
 			rowbytes++;
 		}
 
