@@ -28,10 +28,11 @@ int main(int argc, char *argv[])
 			printf("Card has no bmp data or can't parse.\n");
 			continue;
 		}
-		printf("width: %d; height %d; datalen %d\n",
-		       width, height, datalen);
-		int rowbytes = width/8;
-		if (width%8) rowbytes++;
+		printf("width: %d; height %d; datalen %d\n", width, height,
+		       datalen);
+		int rowbytes = width / 8;
+		if (width % 8)
+			rowbytes++;
 
 		if (rowbytes * height != datalen) {
 			rowbytes++;
@@ -40,11 +41,9 @@ int main(int argc, char *argv[])
 		/* image bits aligned to 8 memory bits */
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < rowbytes; x++) {
-				uint8_t byte =
-					datastart[(y*rowbytes)+x];
+				uint8_t byte = datastart[(y * rowbytes) + x];
 				for (int i = 0; i < 8; i++) {
-					putchar((byte<<i)&0x80 ?
-						'`':'#');
+					putchar((byte << i) & 0x80 ? '`' : '#');
 				}
 			}
 			putchar('\n');

@@ -728,15 +728,15 @@ int crd_card_parse_bmp(crd_card *card, uint16_t *width, uint16_t *height,
 	}
 	/* Are the casts necessary? You tell me! */
 	*width = card->bmpdata[0];
-	*width |= (uint16_t)(card->bmpdata[1]<<8);
+	*width |= (uint16_t)(card->bmpdata[1] << 8);
 	*height = card->bmpdata[2];
-	*height |= (uint16_t)(card->bmpdata[3]<<8);
+	*height |= (uint16_t)(card->bmpdata[3] << 8);
 	*xcoord = card->bmpdata[4];
-	*xcoord |= (uint16_t)(card->bmpdata[5]<<8);
+	*xcoord |= (uint16_t)(card->bmpdata[5] << 8);
 	*ycoord = card->bmpdata[6];
-	*ycoord |= (uint16_t)(card->bmpdata[7]<<8);
+	*ycoord |= (uint16_t)(card->bmpdata[7] << 8);
 
-	*datalen = card->bmpsize-8;
-	*datastart = card->bmpdata+8;
+	*datalen = card->bmpsize - 8;
+	*datastart = card->bmpdata + 8;
 	return 1;
 }
