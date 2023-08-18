@@ -524,16 +524,6 @@ int main(int argc, char *argv[])
 {
 	deck = crd_cardfile_new();
 
-	/* Toolbar buttons */
-	GtkWidget *button_prev, *button_next, *button_add, *button_delete,
-		*button_quit;
-
-	/* Alignment dohickeys */
-	GtkWidget *toolbar_box, *box2, *hbox;
-	GtkWidget *vbox;
-	GtkWidget *div1, *div2, *div3;
-	GtkWidget *scrwin;
-
 	/* Menubar */
 	GtkWidget *menubar;
 	GtkAccelGroup *accel;
@@ -611,12 +601,12 @@ int main(int argc, char *argv[])
 			 GTK_SIGNAL_FUNC(modified), NULL);
 
 	/* Create toolbar and buttons */
-	toolbar_box = gtk_hbox_new(false, 15);
-	button_prev = pack_new_button(toolbar_box, "Prev", true);
-	button_next = pack_new_button(toolbar_box, "Next", true);
-	button_add = pack_new_button(toolbar_box, "Add", true);
-	button_delete = pack_new_button(toolbar_box, "Delete", true);
-	button_quit = pack_new_button(toolbar_box, "Quit", false);
+	GtkWidget *toolbar_box = gtk_hbox_new(false, 15);
+	GtkWidget *button_prev = pack_new_button(toolbar_box, "Prev", true);
+	GtkWidget *button_next = pack_new_button(toolbar_box, "Next", true);
+	GtkWidget *button_add = pack_new_button(toolbar_box, "Add", true);
+	GtkWidget *button_delete = pack_new_button(toolbar_box, "Delete", true);
+	GtkWidget *button_quit = pack_new_button(toolbar_box, "Quit", false);
 
 	/* Wire up buttons */
 	gtk_signal_connect(GTK_OBJECT(button_prev), "clicked",
@@ -636,36 +626,70 @@ int main(int argc, char *argv[])
 	gtk_list_select_item(GTK_LIST(listbox), selitem);
 
 	/* Lay out GUI */
-	box2 = gtk_vbox_new(false, 0);
-	vbox = gtk_vbox_new(false, 0);
-	hbox = gtk_hbox_new(false, 0);
-	scrwin = gtk_scrolled_window_new(NULL, NULL);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrwin),
-				       GTK_POLICY_AUTOMATIC, false);
+	/*  _____ toplevel container ___
+	 * |  menubar                   |
+	 * |  toolbar                   |
+	 * | _____ split container ____ |
+	 * |             |card header   |
+	 * |             |              |
+	 * |   scroll    |              |
+	 * |  container  |card data view|
+	 * |             |              |
+	 * |             |              |
+	 * |             |(todo) image) |
+	 * |             |              |
+	 * |             |              |
+	 * | -------------------------- |
+	 * |                            |
+	 * `----------------------------'
+	 */
+	GtkWidget *toplevel_container = gtk_vbox_new(false, 0);
+	GtkWidget *split_container = gtk_hpaned_new();
+	GtkWidget *listbox_scroll_container =
+		gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(
+		GTK_SCROLLED_WINDOW(listbox_scroll_container),
+		GTK_POLICY_AUTOMATIC, false);
+	GtkWidget *card_container = gtk_vbox_new(false, 0);
 
-	div1 = gtk_hseparator_new();
-	div2 = gtk_hseparator_new();
-	div3 = gtk_hseparator_new();
-	gtk_widget_set_usize(scrwin, 320, 400);
+	GtkWidget *divider_1 = gtk_hseparator_new();
+	GtkWidget *divider_2 = gtk_hseparator_new();
+	GtkWidget *divider_3 = gtk_hseparator_new();
 
-	gtk_widget_set_usize(card_header, 350, 25);
-	gtk_widget_set_usize(card_data_view, 350, 375);
-	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrwin),
-					      listbox);
-	gtk_box_pack_start(GTK_BOX(hbox), scrwin, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), vbox, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), card_header, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), card_data_view, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), div3, false, false, 0);
+	gtk_paned_pack1(GTK_PANED(split_container), listbox_scroll_container,
+			false, false);
+	gtk_paned_pack2(GTK_PANED(split_container), card_container, true,
+			false);
+	gtk_widget_set_size_request(listbox_scroll_container, 300, -1);
 
-	gtk_box_pack_start(GTK_BOX(box2), menubar, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(box2), toolbar_box, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(box2), div1, false, true, 0);
-	gtk_box_pack_start(GTK_BOX(box2), hbox, false, false, 0);
-	gtk_box_pack_start(GTK_BOX(box2), div2, false, true, 0);
+	gtk_box_pack_start(GTK_BOX(split_container), listbox_scroll_container,
+			   false, false, 0);
+	gtk_box_pack_start(GTK_BOX(split_container), card_container, false,
+			   false, 0);
+
+	gtk_scrolled_window_add_with_viewport(
+		GTK_SCROLLED_WINDOW(listbox_scroll_container), listbox);
+
+	gtk_box_pack_start(GTK_BOX(card_container), card_header, false, false,
+			   0);
+	gtk_box_pack_start(GTK_BOX(card_container), card_data_view, true, true,
+			   0);
+	gtk_box_pack_start(GTK_BOX(card_container), divider_3, false, false, 0);
+	/* Image will go here */
+
+	gtk_box_pack_start(GTK_BOX(toplevel_container), menubar, false, false,
+			   0);
+	gtk_box_pack_start(GTK_BOX(toplevel_container), toolbar_box, false,
+			   false, 0);
+	gtk_box_pack_start(GTK_BOX(toplevel_container), divider_1, false, true,
+			   0);
+	gtk_box_pack_start(GTK_BOX(toplevel_container), split_container, true,
+			   true, 0);
+	gtk_box_pack_start(GTK_BOX(toplevel_container), divider_2, false, true,
+			   0);
 
 	gtk_window_add_accel_group(GTK_WINDOW(window), accel);
-	gtk_container_add(GTK_CONTAINER(window), box2);
+	gtk_container_add(GTK_CONTAINER(window), toplevel_container);
 	gtk_widget_show_all(window);
 
 	/* Hand off to gtk */
