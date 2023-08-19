@@ -750,6 +750,8 @@ void menu_image_import(gpointer data, guint action, GtkWidget *widget)
 #endif
 
 	load_bitmap(deck->cards[selitem]);
+	dirty = true;
+	update_title();
 }
 
 /* ---=== GUI utility ===--- */
