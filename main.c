@@ -615,8 +615,8 @@ void menu_image_import(gpointer data, guint action, GtkWidget *widget)
 
 	if (deck->cards[selitem]->bmpsize && !yes_no_dialog(
 		    "This card already has an image, are you sure you"
-		    "want to import a new one?"
-		    "The old one will be overwritten.")) {
+		    " want to import a new one?"
+		    " The old one will be overwritten.")) {
 		return;
 	}
 
