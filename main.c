@@ -666,6 +666,7 @@ void menu_image_import(gpointer data, guint action, GtkWidget *widget)
 		return;
 	}
 
+#ifdef QUANT_DUMB
 	for (int y = 0; y < height; y++) {
 		int destbyte = y*rowbytes;
 		int destbit = 0;
@@ -686,6 +687,67 @@ void menu_image_import(gpointer data, guint action, GtkWidget *widget)
 	}
 
 	g_free(buf);
+#else  /* Floyd-Steinberg dithering */
+	int16_t *inter = calloc(width*height, sizeof(int16_t));
+
+	/* Pass 1 - convert to grayscale */
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			guchar *p = pixels + (y * rowstride) + (x * n_channels);
+			inter[(y*width)+x] = (p[0] + p[1] + p[3])/3;
+		}
+	}
+	g_free(buf);
+
+	/* Pass 2 - F-S on the grayscale buffer */
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			int16_t oldpixel = inter[(y*width)+x];
+			int16_t newpixel =
+				oldpixel >= ON_BIT_BOUNDARY ? 0xFF : 0;
+			inter[(y*width)+x] = newpixel;
+			int16_t quantError = oldpixel - newpixel;
+			if (x < width-1) {
+				inter[(y*width)+x+1] = inter[(y*width)+x+1] +
+					((quantError*7)/16);
+			}
+			if (y < height-1) {
+				int nextrow = ((y+1)*width)+x;
+
+				if (0 < x) {
+					inter[nextrow-1] = inter[nextrow-1] +
+						((quantError*3)/16);
+				}
+
+				inter[nextrow] = inter[nextrow] +
+					((quantError*5)/16);
+
+				if (x < width-1) {
+					inter[nextrow+1] = inter[nextrow+1] +
+						(quantError/16);
+				}
+			}
+		}
+	}
+
+	/* Pass 3 - copy into packed array */
+	for (int y = 0; y < height; y++) {
+		int destbyte = y*rowbytes;
+		int destbit = 0;
+		for (int x = 0; x < width; x++) {
+			if (inter[(y*width)+x] == 0xFF) {
+				datastart[destbyte] |= 1<<(7-destbit);
+			}
+			destbit++;
+			if (destbit >= 8) {
+				destbyte++;
+				destbit = 0;
+			}
+		}
+	}
+
+	free(inter);
+#endif
 
 	load_bitmap(deck->cards[selitem]);
 }
