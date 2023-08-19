@@ -740,3 +740,39 @@ int crd_card_parse_bmp(crd_card *card, uint16_t *width, uint16_t *height,
 	*datastart = card->bmpdata + 8;
 	return 1;
 }
+
+/* Creates a new bitmap in the given card, freeing any existing bmp
+ * data. Returns a pointer to the start of the pixel data, or null if
+ * the size data would be too large.
+ */
+uint8_t *crd_card_new_bmp(crd_card *card, int width, int height, int rowbytes)
+{
+	int size = height*rowbytes;
+
+	if (size > 65535) {
+		return NULL;
+	}
+
+	if (card->bmpdata != NULL) {
+		free(card->bmpdata);
+	}
+
+	card->bmpdata = calloc(size+8, 1);
+	card->bmpsize = size+8;
+
+	/* little-endian width */
+	card->bmpdata[0] = width&0xFF;
+	card->bmpdata[1] = (width>>8)&0xFF;
+	/* little-endian height */
+	card->bmpdata[2] = height&0xFF;
+	card->bmpdata[3] = (height>>8)&0xFF;
+	/* X & Y co-ords - unused in this program. */
+	/* Already covered by calloc, so this is commented out in case
+	 * a fork wishes to set them. */
+	/* card->bmpdata[4] = 0; */
+	/* card->bmpdata[5] = 0; */
+	/* card->bmpdata[6] = 0; */
+	/* card->bmpdata[7] = 0; */
+
+	return card->bmpdata+8;
+}

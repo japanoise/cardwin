@@ -89,4 +89,10 @@ int crd_card_parse_bmp(crd_card *card, uint16_t *width, uint16_t *height,
 		       uint16_t *xcoord, uint16_t *ycoord, uint16_t *datalen,
 		       uint8_t **datastart);
 
+/* Creates a new bitmap in the given card, freeing any existing bmp
+ * data. Returns a pointer to the start of the pixel data, or null if
+ * the size data would be too large.
+ */
+uint8_t *crd_card_new_bmp(crd_card *card, int width, int height, int rowbytes);
+
 #endif

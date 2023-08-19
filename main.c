@@ -1,5 +1,6 @@
 #include <gtk/gtk.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -21,6 +22,19 @@
 
 #define SB_WIDTH 60
 #define SB_HEIGHT 30
+
+/* Color used to display on bits (white by default) */
+#define ON_BIT_COLOR_R 0xFF
+#define ON_BIT_COLOR_G 0xFF
+#define ON_BIT_COLOR_B 0xFF
+
+/* Color used to display off bits (black by default) */
+#define OFF_BIT_COLOR_R 0x00
+#define OFF_BIT_COLOR_G 0x00
+#define OFF_BIT_COLOR_B 0x00
+
+/* Boundary for an on bit when quantizing */
+#define ON_BIT_BOUNDARY 0x80
 
 /* ---=== Global state ===--- */
 crd_cardfile *deck;
@@ -145,13 +159,13 @@ void load_bitmap(crd_card *card)
 						    (destx * n_channels);
 
 					if ((byte << i) & 0x80) {
-						p[0] = 0xFF;
-						p[1] = 0xFF;
-						p[2] = 0xFF;
+						p[0] = ON_BIT_COLOR_R;
+						p[1] = ON_BIT_COLOR_G;
+						p[2] = ON_BIT_COLOR_B;
 					} else {
-						p[0] = 0x00;
-						p[1] = 0x00;
-						p[2] = 0x00;
+						p[0] = OFF_BIT_COLOR_R;
+						p[1] = OFF_BIT_COLOR_G;
+						p[2] = OFF_BIT_COLOR_B;
 					}
 				}
 				destx++;
@@ -593,6 +607,89 @@ void menu_image_export(gpointer data, guint action, GtkWidget *widget)
 	g_free(fname);
 }
 
+void menu_image_import(gpointer data, guint action, GtkWidget *widget)
+{
+	if (deck->ncards == 0) {
+		return;
+	}
+
+	if (deck->cards[selitem]->bmpsize && !yes_no_dialog(
+		    "This card already has an image, are you sure you"
+		    "want to import a new one?"
+		    "The old one will be overwritten.")) {
+		return;
+	}
+
+	char *fname =
+		file_dialog("Import image", GTK_FILE_CHOOSER_ACTION_OPEN);
+
+	GError *err = NULL;
+	GdkPixbuf* buf = gdk_pixbuf_new_from_file(fname, &err);
+	g_free(fname);
+
+	if (buf == NULL) {
+		error_dialog(err->message);
+		g_error_free(err);
+		return;
+	}
+
+	uint8_t *pixels = gdk_pixbuf_get_pixels(buf);
+	int rowstride = gdk_pixbuf_get_rowstride(buf);
+	int n_channels = gdk_pixbuf_get_n_channels(buf);
+	int width = gdk_pixbuf_get_width(buf);
+	int height = gdk_pixbuf_get_height(buf);
+	int rowbytes = width / 8;
+	if (width % 8) {
+		rowbytes++;
+	}
+
+	if (width > 0xFFFF) {
+		error_dialog(
+			"Image is too wide - must be at most 65535 pixels.");
+		g_free(buf);
+		return;
+	}
+
+	if (height > 0xFFFF) {
+		error_dialog(
+			"Image is too tall - must be at most 65535 pixels.");
+		g_free(buf);
+		return;
+	}
+
+	uint8_t *datastart = crd_card_new_bmp(
+		deck->cards[selitem], width, height, rowbytes);
+
+	if (datastart == NULL) {
+		error_dialog("Image data would be too large");
+		g_free(buf);
+		return;
+	}
+
+	for (int y = 0; y < height; y++) {
+		int destbyte = y*rowbytes;
+		int destbit = 0;
+		for (int x = 0; x < width; x++) {
+			guchar *p = pixels + (y * rowstride) + (x * n_channels);
+
+			if (p[0] >= ON_BIT_BOUNDARY ||
+			    p[1] >= ON_BIT_BOUNDARY ||
+				p[2] >= ON_BIT_BOUNDARY) {
+				datastart[destbyte] |= 1<<(7-destbit);
+			}
+			destbit++;
+			if (destbit >= 8) {
+				destbyte++;
+				destbit = 0;
+			}
+		}
+	}
+
+	g_free(buf);
+
+	load_bitmap(deck->cards[selitem]);
+}
+
 /* ---=== GUI utility ===--- */
 GtkWidget *pack_new_button(GtkWidget *box, char *szlabel, int right)
 {
@@ -674,6 +771,8 @@ int main(int argc, char *argv[])
 		{ "/File/Separator", NULL, NULL, 0, "<Separator>" },
 		{ "/Record/_Image", NULL, NULL, 13, "<Branch>" },
 		{ "/Record/Image/_Export", NULL, menu_image_export, 13,
+		  "<Item>" },
+		{ "/Record/Image/_Import", NULL, menu_image_import, 13,
 		  "<Item>" },
 		{ "/_Help", NULL, NULL, 14, "<LastBranch>" },
 		{ "/Help/_About...", NULL, menu_about, 15, "<Item>" }
