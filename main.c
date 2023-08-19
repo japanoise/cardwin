@@ -549,6 +549,29 @@ void menu_open(gpointer data, guint action, GtkWidget *widget)
 	}
 }
 
+void menu_image_export(gpointer data, guint action, GtkWidget *widget)
+{
+	if (deck->ncards == 0 || !deck->cards[selitem]->bmpsize) {
+		return;
+	}
+
+	char *fname =
+		file_dialog("Export Image As", GTK_FILE_CHOOSER_ACTION_SAVE);
+
+	if (fname == NULL) {
+		return;
+	}
+
+	GError *err = NULL;
+
+	if (!gdk_pixbuf_save(image_data, fname, "png", &err, NULL)) {
+		error_dialog(err->message);
+		g_error_free(err);
+	}
+
+	g_free(fname);
+}
+
 /* ---=== GUI utility ===--- */
 GtkWidget *pack_new_button(GtkWidget *box, char *szlabel, int right)
 {
@@ -627,6 +650,10 @@ int main(int argc, char *argv[])
 		{ "/Record/_Next", "<Alt>n", click_next, 11, "<Item>" },
 		{ "/Record/_Add", NULL, click_add, 12, "<Item>" },
 		{ "/Record/_Delete", NULL, click_delete, 13, "<Item>" },
+		{ "/File/Separator", NULL, NULL, 0, "<Separator>" },
+		{ "/Record/_Image", NULL, click_delete, 13, "<Branch>" },
+		{ "/Record/Image/_Export", NULL,
+		  menu_image_export, 13, "<Item>" },
 		{ "/_Help", NULL, NULL, 14, "<LastBranch>" },
 		{ "/Help/_About...", NULL, menu_about, 15, "<Item>" }
 	};
