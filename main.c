@@ -563,8 +563,29 @@ void menu_image_export(gpointer data, guint action, GtkWidget *widget)
 	}
 
 	GError *err = NULL;
+	char *fmt = "png"; /* Seems a sensible default */
+	char png[] = "png";
+	char jpeg[] = "jpeg";
+	char ico[] = "ico";
+	char bmp[] = "bmp";
+	int len = strlen(fname);
 
-	if (!gdk_pixbuf_save(image_data, fname, "png", &err, NULL)) {
+	char *ext = fname + len - 4;
+
+	/* I know, I know this is stupid. Patches welcome for a better
+	 * version. */
+	if (strcmp(ext, ".bmp") == 0 || strcmp(ext, ".BMP") == 0) {
+		fmt = bmp;
+	} else if (strcmp(ext, ".png") == 0 || strcmp(ext, ".PNG") == 0) {
+		fmt = png;
+	} else if (strcmp(ext, ".ico") == 0 || strcmp(ext, ".ICO") == 0) {
+		fmt = ico;
+	} else if (strcmp(ext, ".jpg") == 0 || strcmp(ext, ".JPG") == 0 ||
+		   strcmp(ext, "jpeg") == 0 || strcmp(ext, "JPEG") == 0) {
+		fmt = jpeg;
+	}
+
+	if (!gdk_pixbuf_save(image_data, fname, fmt, &err, NULL)) {
 		error_dialog(err->message);
 		g_error_free(err);
 	}
@@ -651,9 +672,9 @@ int main(int argc, char *argv[])
 		{ "/Record/_Add", NULL, click_add, 12, "<Item>" },
 		{ "/Record/_Delete", NULL, click_delete, 13, "<Item>" },
 		{ "/File/Separator", NULL, NULL, 0, "<Separator>" },
-		{ "/Record/_Image", NULL, click_delete, 13, "<Branch>" },
-		{ "/Record/Image/_Export", NULL,
-		  menu_image_export, 13, "<Item>" },
+		{ "/Record/_Image", NULL, NULL, 13, "<Branch>" },
+		{ "/Record/Image/_Export", NULL, menu_image_export, 13,
+		  "<Item>" },
 		{ "/_Help", NULL, NULL, 14, "<LastBranch>" },
 		{ "/Help/_About...", NULL, menu_about, 15, "<Item>" }
 	};
